@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [statsRes, visitsRes, harvestsRes, treatmentsRes] = await Promise.all([
+  const [, visitsRes, harvestsRes, treatmentsRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/stats/overview`, {
       headers: { Cookie: "" }, // Will be populated via server auth
       cache: "no-store",
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
   // Build harvest-per-apiary chart data
   const harvestByApiary: Record<string, number> = {};
   for (const h of harvestsRes.data ?? []) {
-    const name = (h.apiaries as { name: string } | null)?.name ?? h.apiary_id;
+    const name = (h.apiaries as unknown as { name: string } | null)?.name ?? h.apiary_id;
     harvestByApiary[name] = (harvestByApiary[name] ?? 0) + h.total_weight_kg;
   }
   const harvestChartData = Object.entries(harvestByApiary).map(([apiary, kg]) => ({ apiary, kg }));
