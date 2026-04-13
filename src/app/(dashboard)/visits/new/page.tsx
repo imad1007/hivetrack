@@ -24,7 +24,7 @@ export default async function NewVisitPage({
 
   if (!hive) redirect("/hives");
 
-  const apiary = hive.apiaries as { lat: number; lng: number; name: string } | null;
+  const apiary = hive.apiaries as unknown as { lat: number; lng: number; name: string } | null;
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto">
