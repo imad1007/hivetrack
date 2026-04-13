@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const db = await createServiceClient();
+  const db = createServiceClient();
 
   const { data: profile } = await db
     .from("profiles")
@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     color: { dark: "#1a1a1a", light: "#ffffff" },
   });
 
-  return new NextResponse(pngBuffer, {
+  return new NextResponse(new Uint8Array(pngBuffer), {
     headers: {
       "Content-Type": "image/png",
       "Content-Disposition": `attachment; filename="hive-${id}-qr.png"`,
