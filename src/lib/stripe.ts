@@ -1,9 +1,10 @@
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.acacia",
-  typescript: true,
-});
+function getStripe(): Stripe {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2025-02-24.acacia",
+  });
+}
 
 export const STRIPE_PRICES = {
   pro:   process.env.STRIPE_PRO_PRICE_ID!,
@@ -19,6 +20,7 @@ export async function createOrRetrieveCustomer(
     return existingCustomerId;
   }
 
+  const stripe = getStripe();
   const customer = await stripe.customers.create({
     email,
     metadata: { supabase_user_id: userId },
@@ -32,6 +34,7 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
+  const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
@@ -46,6 +49,7 @@ export async function createBillingPortalSession(
   customerId: string,
   returnUrl: string
 ): Promise<string> {
+  const stripe = getStripe();
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
