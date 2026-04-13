@@ -34,7 +34,7 @@ const PLANS = [
     features: ["Unlimited apiaries", "Unlimited hives", "All Pro features", "Team members (3)", "Priority support"],
     icon: "🏭",
   },
-] as const;
+] satisfies { id: string; name: string; price: string; description: string; features: readonly string[]; icon: string; badge?: string }[];
 
 export default function BillingPage() {
   const searchParams = useSearchParams();
