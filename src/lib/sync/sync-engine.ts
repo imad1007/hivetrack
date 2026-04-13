@@ -1,6 +1,7 @@
 "use client";
 
 import { getDB } from "@/lib/db";
+import type { Table } from "dexie";
 import { createClient } from "@/lib/supabase/client";
 import type { SyncOperation, SyncQueueItem } from "@/types";
 
@@ -33,9 +34,9 @@ export async function localWrite<T extends { id: string; updated_at?: string }>(
 
   // 1. Write to local DB
   if (operation === "DELETE") {
-    await (db[table] as Dexie.Table<T>).delete(record.id);
+    await (db[table] as unknown as Table<T>).delete(record.id);
   } else {
-    await (db[table] as Dexie.Table<T>).put(record);
+    await (db[table] as unknown as Table<T>).put(record);
   }
 
   // 2. Enqueue for sync
@@ -101,7 +102,7 @@ export async function flushQueue(userId: string): Promise<{ synced: number; conf
               .single();
 
             if (fresh) {
-              await (db[item.table_name as SyncTable] as Dexie.Table).put(fresh);
+              await (db[item.table_name as SyncTable] as unknown as Table).put(fresh);
             }
             conflicts++;
           } else {
@@ -153,7 +154,7 @@ export async function pullAllFromServer(userId: string): Promise<void> {
     }
 
     if (data && data.length > 0) {
-      await (db[table] as Dexie.Table).bulkPut(data);
+      await (db[table] as unknown as Table).bulkPut(data);
     }
   }
 }
