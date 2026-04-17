@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "./dashboard-client";
+import { getUpcomingStageAlerts } from "@/lib/queen-rearing";
+import type { RearingWithStages } from "@/lib/queen-rearing";
 
 export const metadata = { title: "Dashboard" };
 
@@ -111,12 +113,52 @@ export default async function DashboardPage() {
     });
   }
 
+  // Queen rearing alerts — in_progress rearings with stages in alert window
+  const { data: rearingsRaw } = await supabase
+    .from("queen_rearings")
+    .select("id, hives(name), queen_rearing_stages(id, stage_name, estimated_date, alert_days_before, completed)")
+    .eq("user_id", user!.id)
+    .eq("status", "in_progress");
+
+  const rearingsForAlerts: RearingWithStages[] = (rearingsRaw ?? []).map((r) => ({
+    id: r.id,
+    hive_name: (r.hives as unknown as { name: string } | null)?.name ?? "Ruche inconnue",
+    stages: (r.queen_rearing_stages as RearingWithStages["stages"]) ?? [],
+  }));
+  const queenAlerts = getUpcomingStageAlerts(rearingsForAlerts);
+
+  // Feeding suggestions — hives with no feeding in 30 days during Nov–Feb
+  const currentMonth = new Date().getMonth() + 1; // 1-based
+  const isDearth = currentMonth >= 11 || currentMonth <= 2;
+  const feedingSuggestions: { hive_id: string; hive_name: string; days_since: number }[] = [];
+  if (isDearth) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    for (const hive of allHives ?? []) {
+      const { data: lastFeed } = await supabase
+        .from("feedings")
+        .select("feeding_date")
+        .eq("hive_id", hive.id)
+        .order("feeding_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!lastFeed || lastFeed.feeding_date < thirtyDaysAgo) {
+        const daysSince = lastFeed
+          ? Math.floor((Date.now() - new Date(lastFeed.feeding_date).getTime()) / 86_400_000)
+          : 999;
+        const { data: hiveInfo } = await supabase.from("hives").select("name").eq("id", hive.id).single();
+        feedingSuggestions.push({ hive_id: hive.id, hive_name: hiveInfo?.name ?? "Ruche", days_since: daysSince });
+      }
+    }
+  }
+
   return (
     <DashboardClient
       stats={stats}
       visitsChartData={visitsChartData}
       harvestChartData={harvestChartData}
       tasks={tasks}
+      queenAlerts={queenAlerts}
+      feedingSuggestions={feedingSuggestions}
     />
   );
 }

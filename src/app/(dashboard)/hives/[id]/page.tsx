@@ -2,15 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Plus, QrCode, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, QrCode, ChevronDown, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { QueenMark } from "@/components/hives/queen-mark";
 import { formatDate, formatDateTime, daysBetween, addDays } from "@/lib/utils";
 import { computeSwarmRisk, swarmRiskColor } from "@/lib/swarm-risk";
 import { Separator } from "@/components/ui/separator";
+import { FeedingHistory } from "@/components/feeding/feeding-history";
 import type { Visit, Treatment } from "@/types";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -142,6 +142,66 @@ function TreatmentRow({ treatment }: { treatment: Treatment }) {
   );
 }
 
+// ─── Queen rearing section (embedded in hive detail) ─────────────────────────
+
+async function QueenRearingSection({ hiveId }: { hiveId: string }) {
+  const supabase = await createClient();
+  const { data: rearings } = await supabase
+    .from("queen_rearings")
+    .select("id, grafting_date, rearing_type, status, queen_rearing_stages(id, stage_name, estimated_date, completed)")
+    .eq("hive_id", hiveId)
+    .order("grafting_date", { ascending: false })
+    .limit(5);
+
+  const TYPE_LABELS: Record<string, string> = { natural: "Naturel", grafting: "Greffage", division: "Division" };
+  const STATUS_COLORS: Record<string, string> = {
+    in_progress: "bg-amber-100 text-amber-800 border-amber-200",
+    success:     "bg-green-100 text-green-800 border-green-200",
+    failure:     "bg-red-100 text-red-800 border-red-200",
+  };
+  const STATUS_LABELS: Record<string, string> = { in_progress: "En cours", success: "Succès", failure: "Échec" };
+
+  return (
+    <section aria-label="Élevage des reines">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold flex items-center gap-2">
+          <Crown className="h-4 w-4 text-amber-500" aria-hidden="true" />
+          Élevage des reines
+        </h2>
+        <Link href={`/queen-rearing/new`}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Plus className="h-3 w-3" aria-hidden="true" />
+            Nouvel élevage
+          </Button>
+        </Link>
+      </div>
+      {!rearings || rearings.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Aucun élevage enregistré pour cette ruche.</p>
+      ) : (
+        <div className="space-y-2">
+          {rearings.map((r) => {
+            const completed = (r.queen_rearing_stages ?? []).filter((s: { completed: boolean }) => s.completed).length;
+            const total = (r.queen_rearing_stages ?? []).length;
+            return (
+              <Link key={r.id} href={`/queen-rearing/${r.id}`}>
+                <div className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:border-primary/50 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium">{TYPE_LABELS[r.rearing_type]} — J0 : {formatDate(r.grafting_date)}</p>
+                    <p className="text-xs text-muted-foreground">{completed}/{total} étapes complétées</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${STATUS_COLORS[r.status]}`}>
+                    {STATUS_LABELS[r.status]}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function HiveDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -156,10 +216,9 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
 
   if (!hive) notFound();
 
-  const [visitsRes, treatmentsRes, feedingsRes] = await Promise.all([
+  const [visitsRes, treatmentsRes] = await Promise.all([
     supabase.from("visits").select("*").eq("hive_id", id).order("visited_at", { ascending: false }),
     supabase.from("treatments").select("*").eq("hive_id", id).order("start_date", { ascending: false }),
-    supabase.from("feedings").select("*").eq("hive_id", id).order("feeding_date", { ascending: false }),
   ]);
 
   const { data: profile } = await supabase.from("profiles").select("plan_tier").eq("user_id", user!.id).single();
@@ -252,31 +311,21 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
       </section>
 
       {/* Feeding Log */}
-      {feedingsRes.data && feedingsRes.data.length > 0 && (
-        <section aria-label="Feeding log">
-          <h2 className="font-semibold mb-3">Feeding Log</h2>
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium">Date</th>
-                  <th className="text-left px-4 py-2 font-medium">Type</th>
-                  <th className="text-right px-4 py-2 font-medium">Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {feedingsRes.data.map((f) => (
-                  <tr key={f.id} className="border-t">
-                    <td className="px-4 py-2">{formatDate(f.feeding_date)}</td>
-                    <td className="px-4 py-2 capitalize">{f.type.replace(/_/g, " ")}</td>
-                    <td className="px-4 py-2 text-right">{f.quantity_liters ? `${f.quantity_liters}L` : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <section aria-label="Historique des nourrissages">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold">Nourrissages</h2>
+          <Link href="/feeding/new">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Plus className="h-3 w-3" aria-hidden="true" />
+              Nourrir
+            </Button>
+          </Link>
+        </div>
+        <FeedingHistory hiveId={id} />
+      </section>
+
+      {/* Queen Rearing History */}
+      <QueenRearingSection hiveId={id} />
 
       {/* All Treatments */}
       {treatmentsRes.data && treatmentsRes.data.length > 0 && (

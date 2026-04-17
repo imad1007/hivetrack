@@ -12,7 +12,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Hexagon, MapPin, AlertTriangle, FlaskConical, Calendar } from "lucide-react";
+import { Hexagon, MapPin, AlertTriangle, FlaskConical, Calendar, Crown, Utensils, Bell } from "lucide-react";
+import type { StageAlert } from "@/lib/queen-rearing";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
@@ -77,9 +78,11 @@ interface DashboardClientProps {
   visitsChartData: { week: string; visits: number }[];
   harvestChartData: { apiary: string; kg: number }[];
   tasks: { label: string; date: string; type: "treatment" | "queen" | "feeding" }[];
+  queenAlerts: StageAlert[];
+  feedingSuggestions: { hive_id: string; hive_name: string; days_since: number }[];
 }
 
-export function DashboardClient({ stats, visitsChartData, harvestChartData, tasks }: DashboardClientProps) {
+export function DashboardClient({ stats, visitsChartData, harvestChartData, tasks, queenAlerts, feedingSuggestions }: DashboardClientProps) {
   const t = useTranslations("dashboard");
 
   return (
@@ -132,6 +135,57 @@ export function DashboardClient({ stats, visitsChartData, harvestChartData, task
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Queen rearing + feeding alerts */}
+      {(queenAlerts.length > 0 || feedingSuggestions.length > 0) && (
+        <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
+              <Bell className="h-5 w-5" aria-hidden="true" />
+              Alertes &amp; rappels
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {queenAlerts.map((a) => (
+              <Link key={a.stage_id} href={`/queen-rearing/${a.rearing_id}`}>
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-white dark:bg-card p-3 hover:border-amber-400 transition-colors">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Crown className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
+                    <span className="text-sm truncate">
+                      <span className="font-medium">{a.stage_name}</span>
+                      {" — "}{a.hive_name}
+                    </span>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold border ${
+                    a.days_away < 0
+                      ? "bg-red-100 text-red-700 border-red-200"
+                      : a.days_away === 0
+                      ? "bg-amber-100 text-amber-700 border-amber-200"
+                      : "bg-blue-100 text-blue-700 border-blue-200"
+                  }`}>
+                    {a.days_away < 0 ? `${Math.abs(a.days_away)}j de retard` : a.days_away === 0 ? "Aujourd'hui" : `Dans ${a.days_away}j`}
+                  </span>
+                </div>
+              </Link>
+            ))}
+            {feedingSuggestions.map((s) => (
+              <Link key={s.hive_id} href={`/feeding/new`}>
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-white dark:bg-card p-3 hover:border-amber-400 transition-colors">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Utensils className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
+                    <span className="text-sm truncate">
+                      Alimentation recommandée — <span className="font-medium">{s.hive_name}</span>
+                    </span>
+                  </div>
+                  <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold border bg-amber-100 text-amber-700 border-amber-200">
+                    {s.days_since >= 999 ? "Jamais nourrie" : `${s.days_since}j sans nourrissage`}
+                  </span>
+                </div>
+              </Link>
+            ))}
           </CardContent>
         </Card>
       )}

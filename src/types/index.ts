@@ -126,21 +126,61 @@ export interface Treatment {
 
 // ─── Feeding ─────────────────────────────────────────────────────────────────
 
-export type FeedingType =
-  | "syrup_1_1"
-  | "syrup_2_1"
-  | "fondant"
-  | "pollen_sub"
-  | "other";
+export type FeedingType = "syrup_1_1" | "syrup_2_1" | "fondant" | "pollen_sub" | "other";
+export type FoodType = "light_syrup" | "heavy_syrup" | "protein_paste" | "candi";
+export type FeedingUnit = "kg" | "L";
+export type FeedingSessionType = "collective" | "individual";
 
 export interface Feeding {
   id: string;
-  hive_id: string;
+  hive_id?: string;   // nullable — collective feedings use apiary_id
+  apiary_id?: string;
   visit_id?: string;
-  type: FeedingType;
+  // legacy columns
+  type?: FeedingType;
   quantity_liters?: number;
+  // new columns
+  food_type?: FoodType;
+  quantity?: number;
+  unit?: FeedingUnit;
+  feeding_session_type?: FeedingSessionType;
+  notes?: string;
   feeding_date: string;
   created_at: string;
+}
+
+// ─── Queen Rearing ────────────────────────────────────────────────────────────
+
+export type RearingType   = "natural" | "grafting" | "division";
+export type RearingStatus = "in_progress" | "success" | "failure";
+
+export interface QueenRearing {
+  id: string;
+  hive_id: string;
+  user_id: string;
+  grafting_date: string;
+  rearing_type: RearingType;
+  status: RearingStatus;
+  notes?: string;
+  photo_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QueenRearingStage {
+  id: string;
+  queen_rearing_id: string;
+  stage_name: string;
+  estimated_date: string;
+  alert_days_before: number;
+  completed: boolean;
+  completed_at?: string;
+  created_at: string;
+}
+
+export interface QueenRearingWithDetails extends QueenRearing {
+  hives?: { name: string; apiary_id: string } | null;
+  queen_rearing_stages?: QueenRearingStage[];
 }
 
 // ─── Swarm ───────────────────────────────────────────────────────────────────

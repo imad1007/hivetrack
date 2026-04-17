@@ -12,6 +12,8 @@ import {
   LogOut,
   Menu,
   X,
+  Crown,
+  Utensils,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -61,12 +63,14 @@ function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
   const t = useTranslations("nav");
 
   const navItems = [
-    { href: "/dashboard",  label: t("dashboard"),  icon: LayoutDashboard },
-    { href: "/apiaries",   label: t("apiaries"),   icon: MapPin },
-    { href: "/hives",      label: t("hives"),       icon: Hexagon },
-    { href: "/treatments", label: t("treatments"),  icon: FlaskConical },
-    { href: "/harvests",   label: t("harvests"),    icon: Wheat },
-    { href: "/settings",   label: t("settings"),    icon: Settings },
+    { href: "/dashboard",     label: t("dashboard"),    icon: LayoutDashboard },
+    { href: "/apiaries",      label: t("apiaries"),     icon: MapPin },
+    { href: "/hives",         label: t("hives"),        icon: Hexagon },
+    { href: "/treatments",    label: t("treatments"),   icon: FlaskConical },
+    { href: "/harvests",      label: t("harvests"),     icon: Wheat },
+    { href: "/queen-rearing", label: t("queenRearing"), icon: Crown },
+    { href: "/feeding",       label: t("feeding"),      icon: Utensils },
+    { href: "/settings",      label: t("settings"),     icon: Settings },
   ];
 
   async function handleSignOut() {
