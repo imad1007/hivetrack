@@ -37,11 +37,16 @@ export async function GET(request: NextRequest) {
     query = query.eq("hive_id", hive_id);
   } else if (apiary_id) {
     query = query.eq("apiary_id", apiary_id);
-  } else {
-    // Return all feedings for user's hives + apiaries
+  } else if (ownedHiveIds.length > 0 && ownedApiaryIds.length > 0) {
     query = query.or(
       `hive_id.in.(${ownedHiveIds.join(",")}),apiary_id.in.(${ownedApiaryIds.join(",")})`
     );
+  } else if (ownedHiveIds.length > 0) {
+    query = query.in("hive_id", ownedHiveIds);
+  } else if (ownedApiaryIds.length > 0) {
+    query = query.in("apiary_id", ownedApiaryIds);
+  } else {
+    return NextResponse.json({ data: [] });
   }
 
   if (start_date) query = query.gte("feeding_date", start_date);
