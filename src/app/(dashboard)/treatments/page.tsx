@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, FlaskConical } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, CheckCircle2, FlaskConical, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { formatDate, daysBetween, addDays } from "@/lib/utils";
 
 export const metadata = { title: "Treatments" };
@@ -15,22 +16,39 @@ export default async function TreatmentsPage() {
   const { data: hiveIds } = await supabase.from("hives").select("id").eq("user_id", user!.id);
   const ids = (hiveIds ?? []).map((h) => h.id);
 
-  const { data: treatments } = await supabase
-    .from("treatments")
-    .select("*, hives(id, name, apiary_id, apiaries(name))")
-    .in("hive_id", ids)
-    .order("end_date", { ascending: true });
+  const treatments = ids.length === 0 ? [] : (
+    await supabase
+      .from("treatments")
+      .select("*, hives(id, name, apiary_id, apiaries(name))")
+      .in("hive_id", ids)
+      .order("end_date", { ascending: true })
+  ).data ?? [];
 
   const today = new Date();
-  const activeTreatments = (treatments ?? []).filter((t) => new Date(t.end_date) >= today);
-  const pastTreatments = (treatments ?? []).filter((t) => new Date(t.end_date) < today);
+  const activeTreatments = treatments.filter((t) => new Date(t.end_date) >= today);
+  const pastTreatments = treatments.filter((t) => new Date(t.end_date) < today);
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Treatments</h1>
-        <Badge variant="info">{activeTreatments.length} active</Badge>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Treatments</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Track varroa, disease, and preventive treatments. Withdrawal periods are enforced automatically.</p>
+        </div>
+        <Link href="/treatments/new">
+          <Button className="gap-2 shrink-0">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            New Treatment
+          </Button>
+        </Link>
       </div>
+
+      {/* Active count badge */}
+      {activeTreatments.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Badge variant="info">{activeTreatments.length} active treatment{activeTreatments.length > 1 ? "s" : ""}</Badge>
+        </div>
+      )}
 
       {/* DAR alerts */}
       {activeTreatments.some((t) => daysBetween(today, new Date(t.end_date)) <= 7) && (
@@ -105,12 +123,18 @@ export default async function TreatmentsPage() {
         </section>
       ) : (
         <Card>
-          <CardContent className="p-8 text-center">
-            <FlaskConical className="h-10 w-10 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
-            <p className="font-medium">No active treatments</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Log a treatment from the hive detail page.
+          <CardContent className="p-10 text-center">
+            <FlaskConical className="h-12 w-12 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
+            <p className="font-semibold text-lg">No active treatments</p>
+            <p className="text-sm text-muted-foreground mt-1 mb-5 max-w-xs mx-auto">
+              Record a treatment to track active substances, withdrawal periods, and harvest safety dates.
             </p>
+            <Link href="/treatments/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Log First Treatment
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       )}
