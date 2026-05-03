@@ -127,6 +127,25 @@ export default async function DashboardPage() {
   }));
   const queenAlerts = getUpcomingStageAlerts(rearingsForAlerts);
 
+  // Varroa alerts — active hives with mite count ≥3% OR no check in last 30 days
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const varroaAlerts: { hive_id: string; hive_name: string; pct: number | null; overdue: boolean }[] = [];
+  const { data: activeHivesFull } = await supabase.from("hives").select("id, name").eq("user_id", user!.id).eq("status", "active");
+  for (const hive of activeHivesFull ?? []) {
+    const { data: latest } = await supabase
+      .from("varroa_checks")
+      .select("check_date, mites_counted, bees_sampled")
+      .eq("hive_id", hive.id)
+      .order("check_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const pct = latest ? (latest.mites_counted / latest.bees_sampled) * 100 : null;
+    const overdue = !latest || latest.check_date < thirtyDaysAgo;
+    if (pct !== null && pct >= 3) {
+      varroaAlerts.push({ hive_id: hive.id, hive_name: hive.name, pct, overdue });
+    }
+  }
+
   // Feeding suggestions — hives with no feeding in 30 days during Nov–Feb
   const currentMonth = new Date().getMonth() + 1; // 1-based
   const isDearth = currentMonth >= 11 || currentMonth <= 2;
@@ -159,6 +178,7 @@ export default async function DashboardPage() {
       tasks={tasks}
       queenAlerts={queenAlerts}
       feedingSuggestions={feedingSuggestions}
+      varroaAlerts={varroaAlerts}
     />
   );
 }

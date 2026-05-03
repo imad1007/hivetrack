@@ -294,6 +294,41 @@ export const PLAN_LIMITS: Record<
   scale: { apiaries: Infinity, hives: Infinity, export: true, qr: true, team: 3 },
 };
 
+// ─── Varroa Monitoring ───────────────────────────────────────────────────────
+
+export type VarroaMethod = "alcohol_wash" | "sugar_roll" | "drone_brood" | "sticky_board";
+
+export interface VarroaCheck {
+  id: string;
+  hive_id: string;
+  user_id: string;
+  check_date: string;
+  method: VarroaMethod;
+  mites_counted: number;
+  bees_sampled: number;
+  notes?: string | null;
+  created_at: string;
+}
+
+// ─── Hive Splits ─────────────────────────────────────────────────────────────
+
+export type SplitType    = "walk_away" | "artificial_swarm" | "nucleus" | "cut_down";
+export type SplitOutcome = "success" | "failure" | "merged_back";
+export type SplitQueenStatus = "queen_cell" | "virgin_queen" | "mated_queen" | "queenless";
+
+export interface HiveSplit {
+  id: string;
+  source_hive_id: string;
+  new_hive_id: string | null;
+  user_id: string;
+  split_date: string;
+  split_type: SplitType;
+  queen_status: SplitQueenStatus;
+  outcome: SplitOutcome | null;
+  notes?: string | null;
+  created_at: string;
+}
+
 // ─── API Response helpers ────────────────────────────────────────────────────
 
 export interface ApiError {

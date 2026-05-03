@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Plus, QrCode, ChevronDown, Crown } from "lucide-react";
+import { ArrowLeft, Plus, QrCode, ChevronDown, Crown, Bug, GitFork } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -139,6 +139,104 @@ function TreatmentRow({ treatment }: { treatment: Treatment }) {
         </p>
       )}
     </div>
+  );
+}
+
+// ─── Varroa section ──────────────────────────────────────────────────────────
+
+async function VarroaSection({ hiveId }: { hiveId: string }) {
+  const supabase = await createClient();
+  const { data: checks } = await supabase
+    .from("varroa_checks")
+    .select("id, check_date, method, mites_counted, bees_sampled")
+    .eq("hive_id", hiveId)
+    .order("check_date", { ascending: false })
+    .limit(5);
+
+  const latest = checks?.[0];
+  const pct = latest ? (latest.mites_counted / latest.bees_sampled) * 100 : null;
+  const pctColor = pct === null ? "" : pct >= 3 ? "text-red-600" : pct >= 2 ? "text-amber-600" : "text-green-600";
+
+  return (
+    <section aria-label="Varroa monitoring">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold flex items-center gap-2">
+          <Bug className="h-4 w-4 text-red-500" aria-hidden="true" />
+          Varroa
+          {pct !== null && (
+            <span className={`text-sm font-bold ${pctColor}`}>{pct.toFixed(1)}%</span>
+          )}
+        </h2>
+        <Link href={`/varroa/new?hive_id=${hiveId}`}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Plus className="h-3 w-3" aria-hidden="true" />
+            Log Check
+          </Button>
+        </Link>
+      </div>
+      {!checks || checks.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No varroa checks recorded.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {checks.map((c) => {
+            const p = (c.mites_counted / c.bees_sampled) * 100;
+            const color = p >= 3 ? "text-red-600" : p >= 2 ? "text-amber-600" : "text-green-600";
+            return (
+              <div key={c.id} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+                <span className="text-muted-foreground">{formatDate(c.check_date)} · {c.method.replace(/_/g, " ")}</span>
+                <span className={`font-semibold ${color}`}>{p.toFixed(1)}%</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── Splits section ───────────────────────────────────────────────────────────
+
+async function SplitsSection({ hiveId }: { hiveId: string }) {
+  const supabase = await createClient();
+  const { data: splits } = await supabase
+    .from("hive_splits")
+    .select("id, split_date, split_type, outcome, source_hive_id, new_hive_id")
+    .or(`source_hive_id.eq.${hiveId},new_hive_id.eq.${hiveId}`)
+    .order("split_date", { ascending: false })
+    .limit(5);
+
+  if (!splits || splits.length === 0) return null;
+
+  return (
+    <section aria-label="Hive splits">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold flex items-center gap-2">
+          <GitFork className="h-4 w-4 text-violet-500" aria-hidden="true" />
+          Splits
+        </h2>
+        <Link href={`/splits/new?hive_id=${hiveId}`}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Plus className="h-3 w-3" aria-hidden="true" />
+            New Split
+          </Button>
+        </Link>
+      </div>
+      <div className="space-y-1.5">
+        {splits.map((s) => (
+          <div key={s.id} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+            <span className="text-muted-foreground">{formatDate(s.split_date)} · {s.split_type.replace(/_/g, " ")}</span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+              s.outcome === "success"     ? "bg-green-50 text-green-700 border-green-200" :
+              s.outcome === "failure"     ? "bg-red-50 text-red-700 border-red-200" :
+              s.outcome === "merged_back" ? "bg-slate-50 text-slate-700 border-slate-200" :
+              "bg-amber-50 text-amber-700 border-amber-200"
+            }`}>
+              {s.outcome ?? "pending"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -323,6 +421,14 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
         </div>
         <FeedingHistory hiveId={id} />
       </section>
+
+      {/* Varroa Monitoring */}
+      <VarroaSection hiveId={id} />
+
+      <Separator />
+
+      {/* Hive Splits */}
+      <SplitsSection hiveId={id} />
 
       {/* Queen Rearing History */}
       <QueenRearingSection hiveId={id} />

@@ -12,7 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Hexagon, MapPin, AlertTriangle, FlaskConical, Calendar, Crown, Utensils, Bell } from "lucide-react";
+import { Hexagon, MapPin, AlertTriangle, FlaskConical, Calendar, Crown, Utensils, Bell, Bug } from "lucide-react";
 import type { StageAlert } from "@/lib/queen-rearing";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,9 +80,10 @@ interface DashboardClientProps {
   tasks: { label: string; date: string; type: "treatment" | "queen" | "feeding" }[];
   queenAlerts: StageAlert[];
   feedingSuggestions: { hive_id: string; hive_name: string; days_since: number }[];
+  varroaAlerts: { hive_id: string; hive_name: string; pct: number | null; overdue: boolean }[];
 }
 
-export function DashboardClient({ stats, visitsChartData, harvestChartData, tasks, queenAlerts, feedingSuggestions }: DashboardClientProps) {
+export function DashboardClient({ stats, visitsChartData, harvestChartData, tasks, queenAlerts, feedingSuggestions, varroaAlerts }: DashboardClientProps) {
   const t = useTranslations("dashboard");
 
   return (
@@ -135,6 +136,33 @@ export function DashboardClient({ stats, visitsChartData, harvestChartData, task
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Varroa alerts */}
+      {varroaAlerts.length > 0 && (
+        <Card className="border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-red-800 dark:text-red-400">
+              <Bug className="h-5 w-5" aria-hidden="true" />
+              Varroa — Treatment needed
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {varroaAlerts.map((a) => (
+              <Link key={a.hive_id} href={`/varroa/new?hive_id=${a.hive_id}`}>
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-white dark:bg-card p-3 hover:border-red-400 transition-colors">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Bug className="h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
+                    <span className="text-sm font-medium truncate">{a.hive_name}</span>
+                  </div>
+                  <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold border bg-red-100 text-red-700 border-red-200">
+                    {a.pct !== null ? `${a.pct.toFixed(1)}% mites` : "Check overdue"}
+                  </span>
+                </div>
+              </Link>
+            ))}
           </CardContent>
         </Card>
       )}

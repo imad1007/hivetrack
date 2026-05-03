@@ -14,6 +14,9 @@ import {
   X,
   Crown,
   Utensils,
+  Bug,
+  GitFork,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -68,9 +71,12 @@ function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
     { href: "/hives",         label: t("hives"),        icon: Hexagon },
     { href: "/treatments",    label: t("treatments"),   icon: FlaskConical },
     { href: "/harvests",      label: t("harvests"),     icon: Wheat },
-    { href: "/queen-rearing", label: t("queenRearing"), icon: Crown },
-    { href: "/feeding",       label: t("feeding"),      icon: Utensils },
-    { href: "/settings",      label: t("settings"),     icon: Settings },
+    { href: "/queen-rearing",  label: t("queenRearing"),  icon: Crown },
+    { href: "/feeding",        label: t("feeding"),       icon: Utensils },
+    { href: "/varroa",         label: t("varroa"),        icon: Bug },
+    { href: "/splits",         label: t("splits"),        icon: GitFork },
+    { href: "/seasonal-tasks", label: t("seasonalTasks"), icon: CalendarDays },
+    { href: "/settings",       label: t("settings"),      icon: Settings },
   ];
 
   async function handleSignOut() {
