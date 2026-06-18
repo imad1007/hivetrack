@@ -66,7 +66,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <span className="text-4xl">🐝</span>
+            <img src="/images/logo.png" alt="Logo" style={{ height: 60, width: "auto" }} />
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>Start managing your apiaries today</CardDescription>

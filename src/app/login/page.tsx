@@ -56,7 +56,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <span className="text-4xl">🐝</span>
+            <img src="/images/logo.png" alt="Logo" style={{ height: 60, width: "auto" }} />
           </div>
           <CardTitle className="text-2xl">Welcome to HiveTrack</CardTitle>
           <CardDescription>Sign in to manage your apiaries</CardDescription>

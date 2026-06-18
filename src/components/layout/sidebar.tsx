@@ -95,7 +95,7 @@ function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
           className="flex items-center gap-2 text-lg font-semibold"
           onClick={onNavClick}
         >
-          <span className="text-2xl">🐝</span>
+          <img src="/images/logo.png" alt="ORMVAM Logo" style={{ height: 40, width: "auto" }} />
           <span className="text-primary">HiveTrack</span>
         </Link>
       </div>

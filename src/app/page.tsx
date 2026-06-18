@@ -214,7 +214,7 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold">
-            <span className="text-2xl">🐝</span>
+            <img src="/images/logo.png" alt="Logo" style={{ height: 36, width: "auto" }} />
             <span className="text-amber-600">HiveTrack</span>
           </Link>
 
@@ -570,7 +570,7 @@ export default async function LandingPage() {
       {/* ── Final CTA ── */}
       <section className="py-24">
         <div className="mx-auto max-w-2xl px-4 text-center md:px-6">
-          <span className="text-5xl">🐝</span>
+          <img src="/images/logo.png" alt="Logo" style={{ height: 72, width: "auto", margin: "0 auto" }} />
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
             Ready to take control of your hives?
           </h2>
@@ -601,7 +601,7 @@ export default async function LandingPage() {
           <div className="grid gap-8 md:grid-cols-4">
             <div>
               <div className="flex items-center gap-2 text-lg font-bold text-white">
-                <span className="text-2xl">🐝</span>
+                <img src="/images/logo.png" alt="Logo" style={{ height: 36, width: "auto" }} />
                 <span className="text-amber-400">HiveTrack</span>
               </div>
               <p className="mt-3 text-sm leading-relaxed">
