@@ -25,15 +25,24 @@ export default async function SplitsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: splits } = await supabase
-    .from("hive_splits")
-    .select("*")
-    .eq("user_id", user!.id)
-    .order("split_date", { ascending: false });
+  let splits: typeof import("@/lib/demo-data").DEMO_SPLITS | null;
+  let hiveMap: Record<string, string>;
 
-  // Fetch hive names in one query
-  const { data: hives } = await supabase.from("hives").select("id, name").eq("user_id", user!.id);
-  const hiveMap = Object.fromEntries((hives ?? []).map((h) => [h.id, h.name]));
+  if (!user) {
+    const { DEMO_SPLITS, DEMO_SPLITS_HIVE_MAP } = await import("@/lib/demo-data");
+    splits = DEMO_SPLITS;
+    hiveMap = DEMO_SPLITS_HIVE_MAP;
+  } else {
+    const { data: splitsData } = await supabase
+      .from("hive_splits")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("split_date", { ascending: false });
+    splits = splitsData as typeof import("@/lib/demo-data").DEMO_SPLITS | null;
+
+    const { data: hives } = await supabase.from("hives").select("id, name").eq("user_id", user.id);
+    hiveMap = Object.fromEntries((hives ?? []).map((h) => [h.id, h.name]));
+  }
 
   const pending = (splits ?? []).filter((s) => !s.outcome).length;
   const successful = (splits ?? []).filter((s) => s.outcome === "success").length;

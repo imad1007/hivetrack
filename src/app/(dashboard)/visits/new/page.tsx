@@ -19,7 +19,7 @@ export default async function NewVisitPage({
     .from("hives")
     .select("id, name, apiary_id, apiaries(lat, lng, name)")
     .eq("id", hive_id)
-    .eq("user_id", user!.id)
+    .eq("user_id", user?.id ?? "demo")
     .single();
 
   if (!hive) redirect("/hives");

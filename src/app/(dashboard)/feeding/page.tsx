@@ -4,6 +4,9 @@ import { Plus, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
+import type { Feeding } from "@/types";
+
+type FeedingRow = Feeding & { hives: { name: string } | null; apiaries: { name: string } | null };
 
 export const metadata = { title: "Alimentation des colonies" };
 
@@ -23,41 +26,52 @@ export default async function FeedingPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Fetch owned hive / apiary IDs
-  const [{ data: ownedHives }, { data: ownedApiaries }] = await Promise.all([
-    supabase.from("hives").select("id").eq("user_id", user!.id),
-    supabase.from("apiaries").select("id").eq("user_id", user!.id),
-  ]);
-  const hiveIds    = (ownedHives    ?? []).map((h) => h.id);
-  const apiaryIds  = (ownedApiaries ?? []).map((a) => a.id);
+  let feedings: FeedingRow[] | null;
 
-  if (hiveIds.length === 0 && apiaryIds.length === 0) {
-    return (
-      <div className="p-6 text-center">
-        <p className="text-muted-foreground">Créez d&apos;abord un rucher et une ruche.</p>
-      </div>
-    );
-  }
-
-  let query = supabase
-    .from("feedings")
-    .select("*, hives(name), apiaries(name)")
-    .order("feeding_date", { ascending: false })
-    .limit(200);
-
-  if (hiveIds.length > 0 && apiaryIds.length > 0) {
-    query = query.or(`hive_id.in.(${hiveIds.join(",")}),apiary_id.in.(${apiaryIds.join(",")})`);
-  } else if (hiveIds.length > 0) {
-    query = query.in("hive_id", hiveIds);
+  if (!user) {
+    const { DEMO_FEEDINGS } = await import("@/lib/demo-data");
+    let data = DEMO_FEEDINGS as unknown as FeedingRow[];
+    if (food_type) data = data.filter((f) => f.food_type === food_type);
+    if (mode === "collective") data = data.filter((f) => f.feeding_session_type === "collective");
+    if (mode === "individual") data = data.filter((f) => f.feeding_session_type === "individual");
+    feedings = data;
   } else {
-    query = query.in("apiary_id", apiaryIds);
+    const [{ data: ownedHives }, { data: ownedApiaries }] = await Promise.all([
+      supabase.from("hives").select("id").eq("user_id", user.id),
+      supabase.from("apiaries").select("id").eq("user_id", user.id),
+    ]);
+    const hiveIds   = (ownedHives    ?? []).map((h) => h.id);
+    const apiaryIds = (ownedApiaries ?? []).map((a) => a.id);
+
+    if (hiveIds.length === 0 && apiaryIds.length === 0) {
+      return (
+        <div className="p-6 text-center">
+          <p className="text-muted-foreground">Créez d&apos;abord un rucher et une ruche.</p>
+        </div>
+      );
+    }
+
+    let query = supabase
+      .from("feedings")
+      .select("*, hives(name), apiaries(name)")
+      .order("feeding_date", { ascending: false })
+      .limit(200);
+
+    if (hiveIds.length > 0 && apiaryIds.length > 0) {
+      query = query.or(`hive_id.in.(${hiveIds.join(",")}),apiary_id.in.(${apiaryIds.join(",")})`);
+    } else if (hiveIds.length > 0) {
+      query = query.in("hive_id", hiveIds);
+    } else {
+      query = query.in("apiary_id", apiaryIds);
+    }
+
+    if (food_type) query = query.eq("food_type", food_type);
+    if (mode === "collective") query = query.eq("feeding_session_type", "collective");
+    if (mode === "individual") query = query.eq("feeding_session_type", "individual");
+
+    const { data } = await query;
+    feedings = data as FeedingRow[] | null;
   }
-
-  if (food_type)  query = query.eq("food_type", food_type);
-  if (mode === "collective")  query = query.eq("feeding_session_type", "collective");
-  if (mode === "individual")  query = query.eq("feeding_session_type", "individual");
-
-  const { data: feedings } = await query;
 
   // Monthly stats for current month
   const now = new Date();

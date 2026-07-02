@@ -309,7 +309,7 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
     .from("hives")
     .select("*, queens(*), apiaries(name, id)")
     .eq("id", id)
-    .eq("user_id", user!.id)
+    .eq("user_id", user?.id ?? "demo")
     .single();
 
   if (!hive) notFound();
@@ -319,7 +319,7 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
     supabase.from("treatments").select("*").eq("hive_id", id).order("start_date", { ascending: false }),
   ]);
 
-  const { data: profile } = await supabase.from("profiles").select("plan_tier").eq("user_id", user!.id).single();
+  const { data: profile } = await supabase.from("profiles").select("plan_tier").eq("user_id", user?.id ?? "demo").single();
 
   const activeQueen = (hive.queens as { status: string; mark_year: number; breed: string; mark_color: string }[])?.find((q) => q.status === "present");
   const activeTreatments = (treatmentsRes.data ?? []).filter((t) => new Date(t.end_date) >= new Date());

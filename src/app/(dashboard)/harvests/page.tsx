@@ -12,11 +12,19 @@ export default async function HarvestsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: harvests } = await supabase
-    .from("harvests")
-    .select("*, apiaries(name)")
-    .eq("user_id", user!.id)
-    .order("harvest_date", { ascending: false });
+  let harvests: typeof import("@/lib/demo-data").DEMO_HARVESTS | null;
+
+  if (!user) {
+    const { DEMO_HARVESTS } = await import("@/lib/demo-data");
+    harvests = DEMO_HARVESTS;
+  } else {
+    const { data } = await supabase
+      .from("harvests")
+      .select("*, apiaries(name)")
+      .eq("user_id", user.id)
+      .order("harvest_date", { ascending: false });
+    harvests = data as typeof import("@/lib/demo-data").DEMO_HARVESTS | null;
+  }
 
   const totalKg = (harvests ?? []).reduce((sum, h) => sum + h.total_weight_kg, 0);
 

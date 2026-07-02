@@ -13,16 +13,22 @@ export default async function TreatmentsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: hiveIds } = await supabase.from("hives").select("id").eq("user_id", user!.id);
-  const ids = (hiveIds ?? []).map((h) => h.id);
+  let treatments: typeof import("@/lib/demo-data").DEMO_TREATMENTS;
 
-  const treatments = ids.length === 0 ? [] : (
-    await supabase
-      .from("treatments")
-      .select("*, hives(id, name, apiary_id, apiaries(name))")
-      .in("hive_id", ids)
-      .order("end_date", { ascending: true })
-  ).data ?? [];
+  if (!user) {
+    const { DEMO_TREATMENTS } = await import("@/lib/demo-data");
+    treatments = DEMO_TREATMENTS;
+  } else {
+    const { data: hiveIds } = await supabase.from("hives").select("id").eq("user_id", user.id);
+    const ids = (hiveIds ?? []).map((h) => h.id);
+    treatments = ids.length === 0 ? [] : (
+      await supabase
+        .from("treatments")
+        .select("*, hives(id, name, apiary_id, apiaries(name))")
+        .in("hive_id", ids)
+        .order("end_date", { ascending: true })
+    ).data ?? [] as typeof import("@/lib/demo-data").DEMO_TREATMENTS;
+  }
 
   const today = new Date();
   const activeTreatments = treatments.filter((t) => new Date(t.end_date) >= today);

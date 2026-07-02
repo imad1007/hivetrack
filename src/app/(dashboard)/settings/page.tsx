@@ -18,7 +18,7 @@ export default async function SettingsPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("user_id", user!.id)
+    .eq("user_id", user?.id ?? "demo")
     .single();
 
   const tier = profile?.plan_tier ?? "free";

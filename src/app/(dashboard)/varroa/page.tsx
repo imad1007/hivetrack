@@ -24,27 +24,36 @@ export default async function VarroaPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: hives } = await supabase
-    .from("hives")
-    .select("id, name, color_code")
-    .eq("user_id", user!.id)
-    .eq("status", "active")
-    .order("name");
+  type CheckRow = { check_date: string; mites_counted: number; bees_sampled: number; method: string } | null;
+
+  let hives: { id: string; name: string; color_code: string | null }[] | null;
+  let checksMap: Record<string, CheckRow>;
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  // Fetch latest varroa check per hive (one query per hive — acceptable for typical fleet sizes)
-  type CheckRow = { check_date: string; mites_counted: number; bees_sampled: number; method: string } | null;
-  const checksMap: Record<string, CheckRow> = {};
-  for (const hive of hives ?? []) {
+  if (!user) {
+    const { DEMO_VARROA_HIVES, DEMO_VARROA_CHECKS_MAP } = await import("@/lib/demo-data");
+    hives = DEMO_VARROA_HIVES;
+    checksMap = DEMO_VARROA_CHECKS_MAP;
+  } else {
     const { data } = await supabase
-      .from("varroa_checks")
-      .select("check_date, mites_counted, bees_sampled, method")
-      .eq("hive_id", hive.id)
-      .order("check_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    checksMap[hive.id] = data;
+      .from("hives")
+      .select("id, name, color_code")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("name");
+    hives = data;
+    checksMap = {};
+    for (const hive of hives ?? []) {
+      const { data: checkData } = await supabase
+        .from("varroa_checks")
+        .select("check_date, mites_counted, bees_sampled, method")
+        .eq("hive_id", hive.id)
+        .order("check_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      checksMap[hive.id] = checkData;
+    }
   }
 
   const hivesAboveThreshold = Object.values(checksMap).filter(

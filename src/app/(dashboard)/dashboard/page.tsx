@@ -9,6 +9,24 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  if (!user) {
+    const {
+      DEMO_STATS, DEMO_VISITS_CHART_DATA, DEMO_HARVEST_CHART_DATA,
+      DEMO_TASKS, DEMO_QUEEN_ALERTS, DEMO_VARROA_ALERTS, DEMO_FEEDING_SUGGESTIONS,
+    } = await import("@/lib/demo-data");
+    return (
+      <DashboardClient
+        stats={DEMO_STATS}
+        visitsChartData={DEMO_VISITS_CHART_DATA}
+        harvestChartData={DEMO_HARVEST_CHART_DATA}
+        tasks={DEMO_TASKS}
+        queenAlerts={DEMO_QUEEN_ALERTS}
+        feedingSuggestions={DEMO_FEEDING_SUGGESTIONS}
+        varroaAlerts={DEMO_VARROA_ALERTS}
+      />
+    );
+  }
+
   const [, visitsRes, harvestsRes, treatmentsRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/stats/overview`, {
       headers: { Cookie: "" }, // Will be populated via server auth
@@ -19,7 +37,7 @@ export default async function DashboardPage() {
     supabase
       .from("visits")
       .select("visited_at")
-      .eq("user_id", user!.id)
+      .eq("user_id", user.id)
       .gte("visited_at", new Date(Date.now() - 84 * 24 * 60 * 60 * 1000).toISOString())
       .order("visited_at"),
 
@@ -27,7 +45,7 @@ export default async function DashboardPage() {
     supabase
       .from("harvests")
       .select("apiary_id, total_weight_kg, harvest_date, apiaries(name)")
-      .eq("user_id", user!.id)
+      .eq("user_id", user.id)
       .gte("harvest_date", `${new Date().getFullYear()}-01-01`)
       .order("harvest_date"),
 
@@ -37,7 +55,7 @@ export default async function DashboardPage() {
       .select("*, hives(name, apiary_id)")
       .in(
         "hive_id",
-        (await supabase.from("hives").select("id").eq("user_id", user!.id)).data?.map((h) => h.id) ?? []
+        (await supabase.from("hives").select("id").eq("user_id", user.id)).data?.map((h) => h.id) ?? []
       )
       .lte("end_date", new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
       .gte("end_date", new Date().toISOString().split("T")[0])
@@ -50,18 +68,18 @@ export default async function DashboardPage() {
   const today = new Date().toISOString().split("T")[0];
 
   const [totalHivesRes, totalApiariesRes, treatEndingSoonRes] = await Promise.all([
-    supabase.from("hives").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("status", "active"),
-    supabase.from("apiaries").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+    supabase.from("hives").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "active"),
+    supabase.from("apiaries").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     supabase
       .from("treatments")
       .select("id", { count: "exact", head: true })
-      .in("hive_id", (await supabase.from("hives").select("id").eq("user_id", user!.id)).data?.map((h) => h.id) ?? [])
+      .in("hive_id", (await supabase.from("hives").select("id").eq("user_id", user.id)).data?.map((h) => h.id) ?? [])
       .gte("end_date", today)
       .lte("end_date", sevenDaysFromNow.toISOString().split("T")[0]),
   ]);
 
   // Hives needing attention
-  const { data: allHives } = await supabase.from("hives").select("id").eq("user_id", user!.id).eq("status", "active");
+  const { data: allHives } = await supabase.from("hives").select("id").eq("user_id", user.id).eq("status", "active");
   let hivesNeedingAttention = 0;
   for (const hive of allHives ?? []) {
     const { data: lv } = await supabase.from("visits").select("visited_at").eq("hive_id", hive.id).order("visited_at", { ascending: false }).limit(1).maybeSingle();
@@ -117,7 +135,7 @@ export default async function DashboardPage() {
   const { data: rearingsRaw } = await supabase
     .from("queen_rearings")
     .select("id, hives(name), queen_rearing_stages(id, stage_name, estimated_date, alert_days_before, completed)")
-    .eq("user_id", user!.id)
+    .eq("user_id", user.id)
     .eq("status", "in_progress");
 
   const rearingsForAlerts: RearingWithStages[] = (rearingsRaw ?? []).map((r) => ({
@@ -130,7 +148,7 @@ export default async function DashboardPage() {
   // Varroa alerts — active hives with mite count ≥3% OR no check in last 30 days
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
   const varroaAlerts: { hive_id: string; hive_name: string; pct: number | null; overdue: boolean }[] = [];
-  const { data: activeHivesFull } = await supabase.from("hives").select("id, name").eq("user_id", user!.id).eq("status", "active");
+  const { data: activeHivesFull } = await supabase.from("hives").select("id, name").eq("user_id", user.id).eq("status", "active");
   for (const hive of activeHivesFull ?? []) {
     const { data: latest } = await supabase
       .from("varroa_checks")

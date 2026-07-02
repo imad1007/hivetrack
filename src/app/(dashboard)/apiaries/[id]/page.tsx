@@ -22,7 +22,7 @@ export default async function ApiaryDetailPage({ params }: { params: Promise<{ i
     .from("apiaries")
     .select("*")
     .eq("id", id)
-    .eq("user_id", user!.id)
+    .eq("user_id", user?.id ?? "demo")
     .single();
 
   if (!apiary) notFound();

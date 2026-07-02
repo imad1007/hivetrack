@@ -12,21 +12,32 @@ export default async function HivesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const t = await getTranslations("hives");
 
-  const { data: hives } = await supabase
-    .from("hives")
-    .select("*, queens(*), apiaries(name, id)")
-    .eq("user_id", user!.id)
-    .order("created_at");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let hives: any[] | null;
+  let lastVisitMap: Record<string, string>;
 
-  const { data: lastVisits } = await supabase
-    .from("visits")
-    .select("hive_id, visited_at")
-    .in("hive_id", (hives ?? []).map((h) => h.id))
-    .order("visited_at", { ascending: false });
+  if (!user) {
+    const { DEMO_HIVES_WITH_DETAILS, DEMO_LAST_VISIT_MAP } = await import("@/lib/demo-data");
+    hives = DEMO_HIVES_WITH_DETAILS;
+    lastVisitMap = DEMO_LAST_VISIT_MAP;
+  } else {
+    const { data: hivesData } = await supabase
+      .from("hives")
+      .select("*, queens(*), apiaries(name, id)")
+      .eq("user_id", user.id)
+      .order("created_at");
+    hives = hivesData;
 
-  const lastVisitMap: Record<string, string> = {};
-  for (const v of lastVisits ?? []) {
-    if (!lastVisitMap[v.hive_id]) lastVisitMap[v.hive_id] = v.visited_at;
+    const { data: lastVisits } = await supabase
+      .from("visits")
+      .select("hive_id, visited_at")
+      .in("hive_id", (hivesData ?? []).map((h) => h.id))
+      .order("visited_at", { ascending: false });
+
+    lastVisitMap = {};
+    for (const v of lastVisits ?? []) {
+      if (!lastVisitMap[v.hive_id]) lastVisitMap[v.hive_id] = v.visited_at;
+    }
   }
 
   return (

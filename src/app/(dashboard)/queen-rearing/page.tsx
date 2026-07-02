@@ -45,15 +45,24 @@ export default async function QueenRearingPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let query = supabase
-    .from("queen_rearings")
-    .select("*, hives(name, apiary_id), queen_rearing_stages(*)")
-    .eq("user_id", user!.id)
-    .order("grafting_date", { ascending: false });
+  let rearings: QueenRearingWithDetails[] | null;
 
-  if (status && status !== "all") query = query.eq("status", status);
+  if (!user) {
+    const { DEMO_QUEEN_REARINGS } = await import("@/lib/demo-data");
+    rearings = (status && status !== "all")
+      ? DEMO_QUEEN_REARINGS.filter((r) => r.status === status) as QueenRearingWithDetails[]
+      : DEMO_QUEEN_REARINGS as QueenRearingWithDetails[];
+  } else {
+    let query = supabase
+      .from("queen_rearings")
+      .select("*, hives(name, apiary_id), queen_rearing_stages(*)")
+      .eq("user_id", user.id)
+      .order("grafting_date", { ascending: false });
 
-  const { data: rearings } = await query;
+    if (status && status !== "all") query = query.eq("status", status);
+    const { data } = await query;
+    rearings = data as QueenRearingWithDetails[] | null;
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
