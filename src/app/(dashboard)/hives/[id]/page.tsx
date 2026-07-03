@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Plus, QrCode, ChevronDown, Crown, Bug, GitFork } from "lucide-react";
+import { ArrowLeft, Plus, Printer, ChevronDown, Crown, Bug, GitFork } from "lucide-react";
+import { DEMO_HIVES_WITH_DETAILS, DEMO_LAST_VISIT_MAP } from "@/lib/demo-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -305,24 +306,48 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: hive } = await supabase
-    .from("hives")
-    .select("*, queens(*), apiaries(name, id)")
-    .eq("id", id)
-    .eq("user_id", user?.id ?? "demo")
-    .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let hive: any = null;
+  let visitsData: Visit[] = [];
+  let treatmentsData: Treatment[] = [];
 
-  if (!hive) notFound();
+  if (!user) {
+    const demoHive = DEMO_HIVES_WITH_DETAILS.find((h) => h.id === id);
+    if (!demoHive) notFound();
+    hive = {
+      ...demoHive,
+      notes: null,
+    };
+    const lastVisit = DEMO_LAST_VISIT_MAP[id];
+    visitsData = lastVisit
+      ? [{ id: "v-demo", hive_id: id, visited_at: lastVisit, behavior: "calm", brood_frames: 7, stores_frames: 4, pollen_frames: 2, queen_seen: true, queen_laying: true, swarm_signs: [], notes: "Demo visit — colony in excellent condition.", photos_urls: [], weather_json: null } as unknown as Visit]
+      : [];
+    treatmentsData = [];
+  } else {
+    const { data } = await supabase
+      .from("hives")
+      .select("*, queens(*), apiaries(name, id)")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
 
-  const [visitsRes, treatmentsRes] = await Promise.all([
-    supabase.from("visits").select("*").eq("hive_id", id).order("visited_at", { ascending: false }),
-    supabase.from("treatments").select("*").eq("hive_id", id).order("start_date", { ascending: false }),
-  ]);
+    if (!data) notFound();
+    hive = data;
 
-  const { data: profile } = await supabase.from("profiles").select("plan_tier").eq("user_id", user?.id ?? "demo").single();
+    const [visitsRes, treatmentsRes] = await Promise.all([
+      supabase.from("visits").select("*").eq("hive_id", id).order("visited_at", { ascending: false }),
+      supabase.from("treatments").select("*").eq("hive_id", id).order("start_date", { ascending: false }),
+    ]);
+    visitsData = visitsRes.data ?? [];
+    treatmentsData = treatmentsRes.data ?? [];
+  }
+
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("plan_tier").eq("user_id", user.id).single()
+    : { data: null };
 
   const activeQueen = (hive.queens as { status: string; mark_year: number; breed: string; mark_color: string }[])?.find((q) => q.status === "present");
-  const activeTreatments = (treatmentsRes.data ?? []).filter((t) => new Date(t.end_date) >= new Date());
+  const activeTreatments = treatmentsData.filter((t) => new Date(t.end_date) >= new Date());
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
@@ -355,14 +380,12 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          {profile?.plan_tier !== "free" && (
-            <a href={`/api/hives/${id}/qr`} download>
-              <Button variant="outline" size="sm" className="gap-2">
-                <QrCode className="h-4 w-4" aria-hidden="true" />
-                QR Code
-              </Button>
-            </a>
-          )}
+          <Link href={`/hives/print?id=${id}`}>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Printer className="h-4 w-4" aria-hidden="true" />
+              Print Tag
+            </Button>
+          </Link>
           <Link href={`/visits/new?hive_id=${id}`}>
             <Button size="sm" className="gap-2">
               <Plus className="h-4 w-4" aria-hidden="true" />
@@ -390,11 +413,11 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
       <section aria-label="Visit history">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold">Visit History</h2>
-          <span className="text-sm text-muted-foreground">{visitsRes.data?.length ?? 0} visits</span>
+          <span className="text-sm text-muted-foreground">{visitsData.length} visits</span>
         </div>
-        {visitsRes.data && visitsRes.data.length > 0 ? (
+        {visitsData.length > 0 ? (
           <div className="space-y-3">
-            {visitsRes.data.map((v) => (
+            {visitsData.map((v) => (
               <VisitRow key={v.id} visit={v} />
             ))}
           </div>
@@ -434,11 +457,11 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
       <QueenRearingSection hiveId={id} />
 
       {/* All Treatments */}
-      {treatmentsRes.data && treatmentsRes.data.length > 0 && (
+      {treatmentsData.length > 0 && (
         <section aria-label="All treatments">
           <h2 className="font-semibold mb-3">Treatment History</h2>
           <div className="space-y-3">
-            {treatmentsRes.data.map((t) => (
+            {treatmentsData.map((t) => (
               <TreatmentRow key={t.id} treatment={t} />
             ))}
           </div>

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HiveCard } from "@/components/hives/hive-card";
 import { getTranslations } from "next-intl/server";
@@ -44,12 +44,20 @@ export default async function HivesPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("title")}</h1>
-        <Link href="/hives/new">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            {t("addHive")}
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/hives/print">
+            <Button variant="outline" className="gap-2">
+              <Printer className="h-4 w-4" aria-hidden="true" />
+              Print All Tags
+            </Button>
+          </Link>
+          <Link href="/hives/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              {t("addHive")}
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {hives && hives.length > 0 ? (

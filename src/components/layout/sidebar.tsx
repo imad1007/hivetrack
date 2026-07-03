@@ -17,6 +17,7 @@ import {
   Bug,
   GitFork,
   CalendarDays,
+  ScanLine,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
     { href: "/varroa",         label: t("varroa"),        icon: Bug },
     { href: "/splits",         label: t("splits"),        icon: GitFork },
     { href: "/seasonal-tasks", label: t("seasonalTasks"), icon: CalendarDays },
+    { href: "/scan",           label: t("scanHive"),      icon: ScanLine },
     { href: "/settings",       label: t("settings"),      icon: Settings },
   ];
 
