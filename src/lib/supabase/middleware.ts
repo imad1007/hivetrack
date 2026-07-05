@@ -31,7 +31,11 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
-  const isPublicPage = pathname.startsWith("/hives/scan") || pathname === "/" || pathname.startsWith("/api/debug") || pathname.startsWith("/api/") || pathname.startsWith("/dashboard") || pathname.startsWith("/apiaries") || pathname.startsWith("/hives") || pathname.startsWith("/treatments") || pathname.startsWith("/harvests") || pathname.startsWith("/queen-rearing") || pathname.startsWith("/feeding") || pathname.startsWith("/varroa") || pathname.startsWith("/splits") || pathname.startsWith("/seasonal-tasks") || pathname.startsWith("/settings");
+  const isPublicPage =
+    pathname === "/" ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/hives/scan") ||
+    pathname.startsWith("/h/");
 
   if (!user && !isAuthPage && !isPublicPage) {
     const url = request.nextUrl.clone();

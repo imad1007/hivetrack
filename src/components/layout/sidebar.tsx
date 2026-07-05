@@ -111,6 +111,17 @@ function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
         </nav>
       </div>
 
+      {/* Sign out */}
+      <div className="shrink-0 border-t p-3">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-muted-foreground"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-5 w-5" />
+          {t("signOut")}
+        </Button>
+      </div>
     </div>
   );
 }
