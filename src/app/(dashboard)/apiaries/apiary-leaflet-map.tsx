@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import type { Map as LeafletMap } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
@@ -42,6 +43,29 @@ interface EnrichedApiary extends Apiary {
 }
 
 export default function ApiaryLeafletMap({ apiaries }: { apiaries: EnrichedApiary[] }) {
+  const mapRef = useRef<LeafletMap | null>(null);
+
+  // Leaflet's map.remove() does not clear _leaflet_id on the container DOM node.
+  // Running this before MapContainer's useEffect prevents the "already initialized"
+  // error on HMR reloads and React StrictMode double-invocations.
+  useLayoutEffect(() => {
+    document.querySelectorAll<HTMLElement>(".leaflet-container").forEach((el) => {
+      delete (el as unknown as Record<string, unknown>)._leaflet_id;
+    });
+    return () => {
+      if (mapRef.current) {
+        try {
+          const container = mapRef.current.getContainer();
+          mapRef.current.remove();
+          delete (container as unknown as Record<string, unknown>)._leaflet_id;
+        } catch {
+          // map was already removed by react-leaflet
+        }
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
   const center: [number, number] =
     apiaries.length > 0
       ? [apiaries[0].lat, apiaries[0].lng]
@@ -53,6 +77,7 @@ export default function ApiaryLeafletMap({ apiaries }: { apiaries: EnrichedApiar
   return (
     <div className="flex-1 relative">
       <MapContainer
+        ref={mapRef}
         center={center}
         zoom={zoom}
         style={{ height: "100%", width: "100%" }}
