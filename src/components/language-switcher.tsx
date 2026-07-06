@@ -1,9 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import { useLocale } from "next-intl";
 import { locales, localeNames, type Locale } from "@/i18n/config";
-import { setLocale } from "@/app/actions/locale";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,14 +21,18 @@ interface LanguageSwitcherProps {
 export function LanguageSwitcher({ variant = "icon" }: LanguageSwitcherProps) {
   const locale = useLocale();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  function handleSelect(next: Locale) {
-    if (next === locale) return;
-    startTransition(async () => {
-      await setLocale(next);
-      router.refresh();
+  async function handleSelect(next: Locale) {
+    if (next === locale || isPending) return;
+    setIsPending(true);
+    await fetch("/api/locale", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ locale: next }),
     });
+    router.refresh();
+    setIsPending(false);
   }
 
   if (variant === "full") {
