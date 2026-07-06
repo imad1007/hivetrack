@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   MapPin, Hexagon, FlaskConical, Wheat, BarChart3, QrCode,
-  Smartphone, Download, Users, Shield, Check, ChevronRight,
+  Smartphone, Download, Shield, Check, ChevronRight,
   Star, Bell, CloudOff, Globe,
 } from "lucide-react";
 
@@ -101,62 +101,6 @@ const STEPS = [
   },
 ];
 
-const PLANS = [
-  {
-    id: "free",
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    desc: "Perfect for hobbyist beekeepers just getting started.",
-    features: [
-      "Up to 2 apiaries",
-      "Up to 10 hives",
-      "Basic visit logging",
-      "Mobile-friendly interface",
-      "Community support",
-    ],
-    cta: "Get started free",
-    href: "/register",
-    highlight: false,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "$39",
-    period: "/ month",
-    desc: "For serious beekeepers who want the full picture.",
-    features: [
-      "Up to 10 apiaries",
-      "Unlimited hives",
-      "CSV & JSON export",
-      "QR code hive labels",
-      "Priority charts & analytics",
-      "Email support",
-    ],
-    cta: "Start Pro",
-    href: "/register",
-    highlight: true,
-    badge: "Most Popular",
-  },
-  {
-    id: "scale",
-    name: "Scale",
-    price: "$69",
-    period: "/ month",
-    desc: "For commercial operations and professional apiaries.",
-    features: [
-      "Unlimited apiaries",
-      "Unlimited hives",
-      "All Pro features",
-      "Up to 3 team members",
-      "Priority support",
-      "Early access to new features",
-    ],
-    cta: "Start Scale",
-    href: "/register",
-    highlight: false,
-  },
-];
 
 const TESTIMONIALS = [
   {
@@ -169,7 +113,7 @@ const TESTIMONIALS = [
     name: "Carlos M.",
     role: "Semi-commercial · 60 hives",
     avatar: "👨‍🌾",
-    text: "The treatment reminders alone are worth the Pro subscription. I haven't missed a varroa treatment deadline since I switched. The harvest charts are a great bonus.",
+    text: "The treatment reminders are a game changer. I haven't missed a varroa treatment deadline since I switched to HiveTrack. The harvest charts are a great bonus.",
   },
   {
     name: "Sophie L.",
@@ -185,10 +129,6 @@ const FAQS = [
     a: "No. HiveTrack is a web app — it runs entirely in your browser on phones, tablets and computers. No download required.",
   },
   {
-    q: "What happens to my data if I cancel?",
-    a: "You can export all your records as CSV or JSON at any time. We'll also give you a 30-day window after cancellation to retrieve everything.",
-  },
-  {
     q: "Can I use HiveTrack without an internet connection?",
     a: "Yes. The app caches your data locally so you can log visits and treatments offline. Everything syncs automatically when you reconnect.",
   },
@@ -197,8 +137,8 @@ const FAQS = [
     a: "All data is encrypted in transit and at rest. Authentication is handled by Supabase (row-level security). We never share your data with third parties.",
   },
   {
-    q: "Can I upgrade or downgrade my plan?",
-    a: "Absolutely. You can change plans at any time from the Billing page. Upgrades take effect immediately; downgrades apply at the next billing cycle.",
+    q: "Can I export my data?",
+    a: "Yes. You can export all your records as CSV or JSON at any time from the Settings page. Your data always belongs to you.",
   },
 ];
 
@@ -221,7 +161,6 @@ export default async function LandingPage() {
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
             <a href="#features" className="hover:text-amber-600 transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-amber-600 transition-colors">How it works</a>
-            <a href="#pricing" className="hover:text-amber-600 transition-colors">Pricing</a>
             <a href="#faq" className="hover:text-amber-600 transition-colors">FAQ</a>
           </nav>
 
@@ -239,7 +178,7 @@ export default async function LandingPage() {
                   Log in
                 </Link>
                 <Link href="/register" className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 transition-colors">
-                  Get started free
+                  Register
                 </Link>
               </>
             )}
@@ -272,7 +211,7 @@ export default async function LandingPage() {
               href="/register"
               className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-amber-200 hover:bg-amber-600 transition-colors"
             >
-              Start for free <ChevronRight className="h-4 w-4" />
+              Start now <ChevronRight className="h-4 w-4" />
             </Link>
             <a
               href="#how-it-works"
@@ -282,7 +221,7 @@ export default async function LandingPage() {
             </a>
           </div>
 
-          <p className="mt-4 text-xs text-slate-400">Free plan available · No credit card required</p>
+          <p className="mt-4 text-xs text-slate-400">No credit card required</p>
 
           {/* hero visual */}
           <div className="mt-16 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl shadow-slate-200">
@@ -436,7 +375,7 @@ export default async function LandingPage() {
                   { icon: Bell, label: "Smart alerts for overdue visits" },
                   { icon: Shield, label: "Treatment deadline tracking" },
                   { icon: Globe, label: "Works on any device, anywhere" },
-                  { icon: Users, label: "Team access on Scale plan" },
+                  { icon: Download, label: "Export all your data anytime" },
                 ].map(({ icon: Icon, label }) => (
                   <div key={label} className="flex items-start gap-2 rounded-xl bg-white/10 p-3 text-sm font-medium text-white backdrop-blur">
                     <Icon className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" />
@@ -481,71 +420,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pricing ── */}
-      <section id="pricing" className="py-24">
-        <div className="mx-auto max-w-5xl px-4 md:px-6">
-          <div className="text-center">
-            <SectionLabel>Transparent pricing</SectionLabel>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
-              Plans for every beekeeper
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-slate-500">
-              Start free, upgrade when you need more. No hidden fees, cancel any time.
-            </p>
-          </div>
-
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative flex flex-col rounded-2xl border p-7 ${
-                  plan.highlight
-                    ? "border-amber-400 bg-amber-500 shadow-xl shadow-amber-200 text-white"
-                    : "border-slate-200 bg-white shadow-sm text-slate-900"
-                }`}
-              >
-                {plan.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-1 text-xs font-bold text-white">
-                    {plan.badge}
-                  </span>
-                )}
-
-                <div className="mb-1 font-semibold">{plan.name}</div>
-                <div className="mb-1 flex items-end gap-1">
-                  <span className="text-4xl font-extrabold">{plan.price}</span>
-                  <span className={`mb-1 text-sm ${plan.highlight ? "text-amber-100" : "text-slate-400"}`}>{plan.period}</span>
-                </div>
-                <p className={`mb-6 text-sm ${plan.highlight ? "text-amber-100" : "text-slate-500"}`}>{plan.desc}</p>
-
-                <ul className="mb-8 flex-1 space-y-2.5">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm">
-                      <Check className={`mt-0.5 h-4 w-4 shrink-0 ${plan.highlight ? "text-amber-200" : "text-amber-500"}`} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={plan.href}
-                  className={`block rounded-xl px-5 py-3 text-center text-sm font-semibold transition-colors ${
-                    plan.highlight
-                      ? "bg-white text-amber-600 hover:bg-amber-50"
-                      : "bg-amber-500 text-white hover:bg-amber-600"
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-6 text-center text-xs text-slate-400">
-            All plans include a 14-day money-back guarantee. No questions asked.
-          </p>
-        </div>
-      </section>
-
       {/* ── FAQ ── */}
       <section id="faq" className="bg-slate-50 py-24">
         <div className="mx-auto max-w-3xl px-4 md:px-6">
@@ -575,15 +449,14 @@ export default async function LandingPage() {
             Ready to take control of your hives?
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-slate-500">
-            Join hundreds of beekeepers already using HiveTrack. Free forever for small
-            apiaries — no credit card required.
+            Join hundreds of beekeepers already using HiveTrack — no credit card required.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/register"
               className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-amber-200 hover:bg-amber-600 transition-colors"
             >
-              Create free account <ChevronRight className="h-4 w-4" />
+              Register now <ChevronRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"
@@ -613,7 +486,6 @@ export default async function LandingPage() {
               <h4 className="mb-3 text-sm font-semibold text-white">Product</h4>
               <ul className="space-y-2 text-sm">
                 <li><a href="#features" className="hover:text-amber-400 transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-amber-400 transition-colors">Pricing</a></li>
                 <li><a href="#how-it-works" className="hover:text-amber-400 transition-colors">How it works</a></li>
                 <li><a href="#faq" className="hover:text-amber-400 transition-colors">FAQ</a></li>
               </ul>
@@ -622,9 +494,8 @@ export default async function LandingPage() {
             <div>
               <h4 className="mb-3 text-sm font-semibold text-white">Account</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/register" className="hover:text-amber-400 transition-colors">Sign up</Link></li>
+                <li><Link href="/register" className="hover:text-amber-400 transition-colors">Register</Link></li>
                 <li><Link href="/login" className="hover:text-amber-400 transition-colors">Log in</Link></li>
-                <li><Link href="/settings/billing" className="hover:text-amber-400 transition-colors">Billing</Link></li>
               </ul>
             </div>
 

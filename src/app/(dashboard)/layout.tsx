@@ -12,6 +12,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
 
   const isAdmin = isAdminEmail(user.email);
+  if (isAdmin) redirect("/admin");
 
   return (
     <div className="flex h-screen overflow-hidden">
