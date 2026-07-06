@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -21,26 +21,52 @@ const HIVE_COLORS = [
   { hex: "#1F2937", name: "Dark" },
 ];
 
+interface Apiary { id: string; name: string; }
+
 export default function NewHivePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const apiaryId = searchParams.get("apiary_id") ?? "";
+  const preselectedApiaryId = searchParams.get("apiary_id") ?? "";
 
   const [name, setName] = useState("");
   const [type, setType] = useState("langstroth");
   const [colorCode, setColorCode] = useState(HIVE_COLORS[0].hex);
+  const [apiaryId, setApiaryId] = useState(preselectedApiaryId);
+  const [apiaries, setApiaries] = useState<Apiary[]>([]);
+  const [loadingApiaries, setLoadingApiaries] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Load apiaries if no apiary_id in URL
+  useEffect(() => {
+    if (preselectedApiaryId) return;
+    setLoadingApiaries(true);
+    fetch("/api/apiaries")
+      .then((r) => r.json())
+      .then((j) => {
+        const list: Apiary[] = j.data ?? [];
+        setApiaries(list);
+        if (list.length === 1) setApiaryId(list[0].id);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingApiaries(false));
+  }, [preselectedApiaryId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!apiaryId) { toast({ title: "Error", description: "Apiary ID is required", variant: "destructive" }); return; }
+    if (!apiaryId) {
+      toast({ title: "Error", description: "Please select an apiary", variant: "destructive" });
+      return;
+    }
+    if (!name.trim()) {
+      toast({ title: "Error", description: "Hive name is required", variant: "destructive" });
+      return;
+    }
     setLoading(true);
-
     try {
       const res = await fetch("/api/hives", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiary_id: apiaryId, name, type, color_code: colorCode }),
+        body: JSON.stringify({ apiary_id: apiaryId, name: name.trim(), type, color_code: colorCode }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to create hive");
@@ -55,7 +81,7 @@ export default function NewHivePage() {
 
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto">
-      <Link href={apiaryId ? `/apiaries/${apiaryId}` : "/hives"}>
+      <Link href={preselectedApiaryId ? `/apiaries/${preselectedApiaryId}` : "/hives"}>
         <Button variant="ghost" size="sm" className="gap-2 mb-4 h-9 px-2">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back
@@ -64,6 +90,34 @@ export default function NewHivePage() {
       <h1 className="text-2xl font-bold mb-6">New Hive</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Apiary selector — only shown when not pre-selected from URL */}
+        {!preselectedApiaryId && (
+          <div className="space-y-2">
+            <Label htmlFor="apiary_id">Apiary *</Label>
+            {loadingApiaries ? (
+              <div className="h-10 rounded-md border bg-muted animate-pulse" />
+            ) : apiaries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No apiaries found.{" "}
+                <Link href="/apiaries/new" className="text-primary underline underline-offset-2">
+                  Create one first.
+                </Link>
+              </p>
+            ) : (
+              <Select value={apiaryId} onValueChange={setApiaryId}>
+                <SelectTrigger id="apiary_id">
+                  <SelectValue placeholder="Select an apiary…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {apiaries.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="hive_name">Name *</Label>
           <Input id="hive_name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Hive #1" required />
@@ -105,7 +159,7 @@ export default function NewHivePage() {
           </div>
         </div>
 
-        <Button type="submit" className="w-full h-12" disabled={loading}>
+        <Button type="submit" className="w-full h-12" disabled={loading || loadingApiaries || (!preselectedApiaryId && apiaries.length === 0)}>
           {loading ? "Creating…" : "Create Hive"}
         </Button>
       </form>
