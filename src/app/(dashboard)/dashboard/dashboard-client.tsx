@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { WeatherForecast } from "@/components/weather/weather-forecast";
 
 interface MetricCardProps {
   title: string;
@@ -81,9 +82,10 @@ interface DashboardClientProps {
   queenAlerts: StageAlert[];
   feedingSuggestions: { hive_id: string; hive_name: string; days_since: number }[];
   varroaAlerts: { hive_id: string; hive_name: string; pct: number | null; overdue: boolean }[];
+  weatherLocation?: { lat: number; lng: number; name: string };
 }
 
-export function DashboardClient({ stats, visitsChartData, harvestChartData, tasks, queenAlerts, feedingSuggestions, varroaAlerts }: DashboardClientProps) {
+export function DashboardClient({ stats, visitsChartData, harvestChartData, tasks, queenAlerts, feedingSuggestions, varroaAlerts, weatherLocation }: DashboardClientProps) {
   const t = useTranslations("dashboard");
 
   return (
@@ -113,6 +115,19 @@ export function DashboardClient({ stats, visitsChartData, harvestChartData, task
           attentionLabel={t("requiresAttention")}
         />
       </div>
+
+      {/* ── Weather Forecast ──────────────────────────────────────────────── */}
+      {weatherLocation && (
+        <Card>
+          <CardContent className="p-4 md:p-5">
+            <WeatherForecast
+              lat={weatherLocation.lat}
+              lng={weatherLocation.lng}
+              apiaryName={weatherLocation.name}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {tasks.length > 0 && (
         <Card>

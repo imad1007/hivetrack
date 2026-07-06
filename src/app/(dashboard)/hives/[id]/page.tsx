@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Plus, Printer, ChevronDown, Crown, Bug, GitFork } from "lucide-react";
 import { DEMO_HIVES_WITH_DETAILS, DEMO_LAST_VISIT_MAP } from "@/lib/demo-data";
+import { HiveQrDisplay } from "@/components/hives/hive-qr-display";
+import { headers } from "next/headers";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -346,6 +348,11 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
     ? await supabase.from("profiles").select("plan_tier").eq("user_id", user.id).single()
     : { data: null };
 
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const proto = process.env.NODE_ENV === "production" ? "https" : "http";
+  const appUrl = `${proto}://${host}`;
+
   const activeQueen = (hive.queens as { status: string; mark_year: number; breed: string; mark_color: string }[])?.find((q) => q.status === "present");
   const activeTreatments = treatmentsData.filter((t) => new Date(t.end_date) >= new Date());
 
@@ -379,19 +386,24 @@ export default async function HiveDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <Link href={`/hives/print?id=${id}`}>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Printer className="h-4 w-4" aria-hidden="true" />
-              Print Tag
-            </Button>
-          </Link>
-          <Link href={`/visits/new?hive_id=${id}`}>
-            <Button size="sm" className="gap-2">
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Log Visit
-            </Button>
-          </Link>
+        <div className="flex items-start gap-3 shrink-0 flex-wrap justify-end">
+          {hive.qr_code_token && (
+            <HiveQrDisplay hiveId={id} token={hive.qr_code_token} appUrl={appUrl} />
+          )}
+          <div className="flex flex-col gap-2">
+            <Link href={`/hives/print?id=${id}`}>
+              <Button variant="outline" size="sm" className="gap-2 w-full">
+                <Printer className="h-4 w-4" aria-hidden="true" />
+                Print Tag
+              </Button>
+            </Link>
+            <Link href={`/visits/new?hive_id=${id}`}>
+              <Button size="sm" className="gap-2 w-full">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Log Visit
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -18,6 +18,7 @@ import {
   GitFork,
   CalendarDays,
   ScanLine,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,7 @@ function NavLink({
   );
 }
 
-function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
+function SidebarNav({ onNavClick, isAdmin }: { onNavClick?: () => void; isAdmin?: boolean }) {
   const router = useRouter();
   const t = useTranslations("nav");
 
@@ -108,6 +109,14 @@ function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
           {navItems.map((item) => (
             <NavLink key={item.href} {...item} onClick={onNavClick} />
           ))}
+          {isAdmin && (
+            <NavLink
+              href="/admin"
+              label="Admin Panel"
+              icon={ShieldCheck}
+              onClick={onNavClick}
+            />
+          )}
         </nav>
       </div>
 
@@ -127,16 +136,16 @@ function SidebarNav({ onNavClick }: { onNavClick?: () => void }) {
 }
 
 /* ─── Desktop sidebar ─────────────────────────────────────────────────────── */
-export function Sidebar() {
+export function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r bg-card h-screen sticky top-0">
-      <SidebarNav />
+      <SidebarNav isAdmin={isAdmin} />
     </aside>
   );
 }
 
 /* ─── Mobile hamburger + drawer (portal) ─────────────────────────────────── */
-export function MobileSidebar() {
+export function MobileSidebar({ isAdmin }: { isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -194,7 +203,7 @@ export function MobileSidebar() {
           </Button>
         </div>
 
-        <SidebarNav onNavClick={() => setOpen(false)} />
+        <SidebarNav onNavClick={() => setOpen(false)} isAdmin={isAdmin} />
       </div>
     </div>
   );

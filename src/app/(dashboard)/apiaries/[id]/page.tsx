@@ -5,9 +5,12 @@ import { Plus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HiveCard } from "@/components/hives/hive-card";
+import { DEMO_APIARIES_ENRICHED, DEMO_HIVES_WITH_DETAILS, DEMO_LAST_VISIT_MAP } from "@/lib/demo-data";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const demoApiary = DEMO_APIARIES_ENRICHED.find((a) => a.id === id);
+  if (demoApiary) return { title: demoApiary.name };
   const supabase = await createClient();
   const { data } = await supabase.from("apiaries").select("name").eq("id", id).single();
   return { title: data?.name ?? "Apiary" };
@@ -18,31 +21,45 @@ export default async function ApiaryDetailPage({ params }: { params: Promise<{ i
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: apiary } = await supabase
-    .from("apiaries")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", user?.id ?? "demo")
-    .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let apiary: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let hives: any[] = [];
+  let lastVisitMap: Record<string, string> = {};
 
-  if (!apiary) notFound();
+  if (!user) {
+    apiary = DEMO_APIARIES_ENRICHED.find((a) => a.id === id);
+    if (!apiary) notFound();
+    hives = DEMO_HIVES_WITH_DETAILS.filter((h) => h.apiary_id === id);
+    lastVisitMap = DEMO_LAST_VISIT_MAP;
+  } else {
+    const { data: apiaryData } = await supabase
+      .from("apiaries")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
 
-  const { data: hives } = await supabase
-    .from("hives")
-    .select("*, queens(*)")
-    .eq("apiary_id", id)
-    .order("created_at");
+    if (!apiaryData) notFound();
+    apiary = apiaryData;
 
-  const { data: lastVisits } = await supabase
-    .from("visits")
-    .select("hive_id, visited_at")
-    .in("hive_id", (hives ?? []).map((h) => h.id))
-    .order("visited_at", { ascending: false });
+    const { data: hivesData } = await supabase
+      .from("hives")
+      .select("*, queens(*)")
+      .eq("apiary_id", id)
+      .order("created_at");
 
-  // Build last visit map
-  const lastVisitMap: Record<string, string> = {};
-  for (const v of lastVisits ?? []) {
-    if (!lastVisitMap[v.hive_id]) lastVisitMap[v.hive_id] = v.visited_at;
+    hives = hivesData ?? [];
+
+    const { data: lastVisits } = await supabase
+      .from("visits")
+      .select("hive_id, visited_at")
+      .in("hive_id", hives.map((h) => h.id))
+      .order("visited_at", { ascending: false });
+
+    for (const v of lastVisits ?? []) {
+      if (!lastVisitMap[v.hive_id]) lastVisitMap[v.hive_id] = v.visited_at;
+    }
   }
 
   return (

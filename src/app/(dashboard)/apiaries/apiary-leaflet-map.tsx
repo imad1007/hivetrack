@@ -1,14 +1,11 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import type { Map as LeafletMap } from "leaflet";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import { MapPin, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Apiary } from "@/types";
 
@@ -20,17 +17,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// Custom honey-colored marker
-function createHiveIcon() {
+function makeHiveIcon() {
   return L.divIcon({
     className: "",
     html: `<div style="
-      width: 40px; height: 40px;
-      background: #f59e0b;
-      border: 3px solid #ffffff;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      width:40px;height:40px;
+      background:#f59e0b;
+      border:3px solid #fff;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      box-shadow:0 2px 8px rgba(0,0,0,.3);
     "></div>`,
     iconSize: [40, 40],
     iconAnchor: [20, 40],
@@ -43,83 +39,71 @@ interface EnrichedApiary extends Apiary {
 }
 
 export default function ApiaryLeafletMap({ apiaries }: { apiaries: EnrichedApiary[] }) {
-  const mapRef = useRef<LeafletMap | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Leaflet's map.remove() does not clear _leaflet_id on the container DOM node.
-  // Running this before MapContainer's useEffect prevents the "already initialized"
-  // error on HMR reloads and React StrictMode double-invocations.
-  useLayoutEffect(() => {
-    document.querySelectorAll<HTMLElement>(".leaflet-container").forEach((el) => {
-      delete (el as unknown as Record<string, unknown>)._leaflet_id;
-    });
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Destroy any stale Leaflet instance on this container before creating a new one.
+    // This is the only reliable place to do this — by the time this useEffect runs
+    // we own the container and can safely mutate it.
+    if ((container as unknown as Record<string, unknown>)._leaflet_id !== undefined) {
+      delete (container as unknown as Record<string, unknown>)._leaflet_id;
+    }
+
+    const center: [number, number] =
+      apiaries.length > 0 ? [apiaries[0].lat, apiaries[0].lng] : [34.0, -5.0];
+    const zoom = apiaries.length > 0 ? 10 : 6;
+
+    const map = L.map(container, { center, zoom });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    const hiveIcon = makeHiveIcon();
+
+    for (const apiary of apiaries) {
+      const popup = L.popup({ minWidth: 180 }).setContent(`
+        <div style="padding:4px 4px 8px;font-family:inherit">
+          <p style="font-weight:600;font-size:14px;margin:0 0 4px">${apiary.name}</p>
+          <p style="font-size:12px;color:#6b7280;margin:0 0 4px">
+            ${apiary.hive_count} active hive${apiary.hive_count !== 1 ? "s" : ""}
+          </p>
+          ${apiary.environment_type
+            ? `<span style="font-size:11px;background:#f3f4f6;border-radius:9999px;padding:2px 8px;text-transform:capitalize">
+                ${apiary.environment_type}
+               </span>`
+            : ""}
+          <div style="margin-top:8px">
+            <a href="/apiaries/${apiary.id}"
+               style="display:block;text-align:center;font-size:12px;font-weight:500;
+                      background:#f59e0b;color:#fff;border-radius:6px;padding:6px 12px;
+                      text-decoration:none">
+              Open Apiary
+            </a>
+          </div>
+        </div>
+      `);
+
+      L.marker([apiary.lat, apiary.lng], { icon: hiveIcon })
+        .bindPopup(popup)
+        .addTo(map);
+    }
+
     return () => {
-      if (mapRef.current) {
-        try {
-          const container = mapRef.current.getContainer();
-          mapRef.current.remove();
-          delete (container as unknown as Record<string, unknown>)._leaflet_id;
-        } catch {
-          // map was already removed by react-leaflet
-        }
-        mapRef.current = null;
-      }
+      map.remove();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const center: [number, number] =
-    apiaries.length > 0
-      ? [apiaries[0].lat, apiaries[0].lng]
-      : [48.8566, 2.3522];
-
-  const zoom = apiaries.length > 0 ? 10 : 5;
-  const hiveIcon = createHiveIcon();
 
   return (
     <div className="flex-1 relative">
-      <MapContainer
-        ref={mapRef}
-        center={center}
-        zoom={zoom}
-        style={{ height: "100%", width: "100%" }}
-        scrollWheelZoom={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+      {/* Leaflet renders into this div imperatively */}
+      <div ref={containerRef} style={{ height: "100%", width: "100%" }} />
 
-        {apiaries.map((apiary) => (
-          <Marker
-            key={apiary.id}
-            position={[apiary.lat, apiary.lng]}
-            icon={hiveIcon}
-          >
-            <Popup minWidth={180}>
-              <div className="p-1 space-y-2">
-                <p className="font-semibold text-sm">{apiary.name}</p>
-                <p className="text-xs text-gray-500">
-                  {apiary.hive_count} active hive{apiary.hive_count !== 1 ? "s" : ""}
-                </p>
-                {apiary.environment_type && (
-                  <span className="inline-block text-xs bg-gray-100 rounded-full px-2 py-0.5 capitalize">
-                    {apiary.environment_type}
-                  </span>
-                )}
-                <div className="pt-1">
-                  <a
-                    href={`/apiaries/${apiary.id}`}
-                    className="block w-full text-center text-xs bg-amber-500 hover:bg-amber-600 text-white rounded-md px-3 py-2 font-medium transition-colors"
-                  >
-                    Open Apiary
-                  </a>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-
-      {/* No apiaries overlay */}
       {apiaries.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1000]">
           <Card className="pointer-events-auto shadow-lg max-w-xs">

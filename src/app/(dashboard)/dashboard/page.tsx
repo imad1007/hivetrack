@@ -13,7 +13,9 @@ export default async function DashboardPage() {
     const {
       DEMO_STATS, DEMO_VISITS_CHART_DATA, DEMO_HARVEST_CHART_DATA,
       DEMO_TASKS, DEMO_QUEEN_ALERTS, DEMO_VARROA_ALERTS, DEMO_FEEDING_SUGGESTIONS,
+      DEMO_APIARIES_ENRICHED,
     } = await import("@/lib/demo-data");
+    const firstApiary = DEMO_APIARIES_ENRICHED[0];
     return (
       <DashboardClient
         stats={DEMO_STATS}
@@ -23,9 +25,19 @@ export default async function DashboardPage() {
         queenAlerts={DEMO_QUEEN_ALERTS}
         feedingSuggestions={DEMO_FEEDING_SUGGESTIONS}
         varroaAlerts={DEMO_VARROA_ALERTS}
+        weatherLocation={{ lat: firstApiary.lat, lng: firstApiary.lng, name: firstApiary.name }}
       />
     );
   }
+
+  // Fetch first apiary for weather coordinates
+  const { data: firstApiaryData } = await supabase
+    .from("apiaries")
+    .select("name, lat, lng")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
   const [, visitsRes, harvestsRes, treatmentsRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/stats/overview`, {
@@ -197,6 +209,11 @@ export default async function DashboardPage() {
       queenAlerts={queenAlerts}
       feedingSuggestions={feedingSuggestions}
       varroaAlerts={varroaAlerts}
+      weatherLocation={
+        firstApiaryData
+          ? { lat: firstApiaryData.lat, lng: firstApiaryData.lng, name: firstApiaryData.name }
+          : undefined
+      }
     />
   );
 }
