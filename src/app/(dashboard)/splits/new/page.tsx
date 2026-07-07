@@ -19,7 +19,7 @@ export default function NewSplitPage() {
 
   const [hives, setHives] = useState<Hive[]>([]);
   const [sourceHiveId, setSourceHiveId] = useState(preHiveId);
-  const [newHiveId, setNewHiveId] = useState("");
+  const [newHiveId, setNewHiveId] = useState("__none__");
   const [splitDate, setSplitDate] = useState(new Date().toISOString().split("T")[0]);
   const [splitType, setSplitType] = useState("walk_away");
   const [queenStatus, setQueenStatus] = useState("queen_cell");
@@ -48,7 +48,7 @@ export default function NewSplitPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source_hive_id: sourceHiveId,
-          new_hive_id: newHiveId || null,
+          new_hive_id: (newHiveId && newHiveId !== "__none__") ? newHiveId : null,
           split_date: splitDate,
           split_type: splitType,
           queen_status: queenStatus,
@@ -98,7 +98,7 @@ export default function NewSplitPage() {
             <Select value={newHiveId} onValueChange={setNewHiveId} disabled={loadingHives}>
               <SelectTrigger><SelectValue placeholder="— none yet —" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— None yet —</SelectItem>
+                <SelectItem value="__none__">— None yet —</SelectItem>
                 {hives.filter((h) => h.id !== sourceHiveId).map((h) => (
                   <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
                 ))}
