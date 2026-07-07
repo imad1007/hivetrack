@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HiveTrack — Guide d'utilisation</title>
+<style>
+  :root {
+    --bg: #FBF7EC;
+    --surface: #FFFFFF;
+    --ink: #241A12;
+    --ink-soft: #6B5842;
+    --ink-faint: #8C7A62;
+    --honey: #C97A0E;
+    --honey-tint: #FBEDD6;
+    --clover: #3F6B4A;
+    --clover-tint: #E4EFE6;
+    --wax-line: #E7DAC0;
+    --code-bg: #F1E7D2;
+    --danger: #B0432B;
+    --danger-tint: #FBE7E1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17110D;
+      --surface: #201810;
+      --ink: #F1E4CC;
+      --ink-soft: #B7A48A;
+      --ink-faint: #8E7A61;
+      --honey: #E9A23A;
+      --honey-tint: #2E2313;
+      --clover: #79B389;
+      --clover-tint: #1D2A20;
+      --wax-line: #362A1C;
+      --code-bg: #2A2016;
+      --danger: #E08066;
+      --danger-tint: #2E1913;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17110D; --surface: #201810; --ink: #F1E4CC; --ink-soft: #B7A48A; --ink-faint: #8E7A61;
+    --honey: #E9A23A; --honey-tint: #2E2313; --clover: #79B389; --clover-tint: #1D2A20;
+    --wax-line: #362A1C; --code-bg: #2A2016; --danger: #E08066; --danger-tint: #2E1913;
+  }
+  :root[data-theme="light"] {
+    --bg: #FBF7EC; --surface: #FFFFFF; --ink: #241A12; --ink-soft: #6B5842; --ink-faint: #8C7A62;
+    --honey: #C97A0E; --honey-tint: #FBEDD6; --clover: #3F6B4A; --clover-tint: #E4EFE6;
+    --wax-line: #E7DAC0; --code-bg: #F1E7D2; --danger: #B0432B; --danger-tint: #FBE7E1;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+  code, .kbd {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.86em;
+    background: var(--code-bg);
+    padding: 0.12em 0.45em;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  a { color: var(--honey); }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 252px minmax(0, 1fr);
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 20px 40px;
+    border-right: 1px solid var(--wax-line);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .brand svg { width: 26px; height: 26px; flex: none; }
+  .brand-name {
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+  }
+  .brand-sub {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin: 0 0 24px 36px;
+  }
+  .nav-group { margin-bottom: 18px; }
+  .nav-group-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 8px 2px;
+  }
+  .nav-group a {
+    display: block;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 5px 8px;
+    border-radius: 5px;
+    margin: 1px 0;
+  }
+  .nav-group a:hover { background: var(--honey-tint); color: var(--ink); }
+  .nav-group a:focus-visible { outline: 2px solid var(--honey); outline-offset: 1px; }
+
+  /* ---- Main content ---- */
+  main { padding: 40px 48px 100px; min-width: 0; }
+  .page-head { margin-bottom: 36px; padding-bottom: 28px; border-bottom: 1px solid var(--wax-line); }
+  .eyebrow {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--honey);
+    margin-bottom: 10px;
+  }
+  h1.title {
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-size: 2.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .page-head p {
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0;
+    font-size: 15.5px;
+  }
+
+  section.topic { margin-bottom: 52px; scroll-margin-top: 20px; }
+  section.topic h2 {
+    font-size: 1.22rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  section.topic .topic-num {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  section.topic > .desc {
+    color: var(--ink-soft);
+    margin: 6px 0 18px;
+    max-width: 68ch;
+  }
+
+  .fields {
+    border: 1px solid var(--wax-line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+    margin-bottom: 16px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    padding: 11px 16px;
+    border-top: 1px solid var(--wax-line);
+    font-size: 13.8px;
+  }
+  .field-row:first-child { border-top: none; }
+  .field-name { font-weight: 600; white-space: nowrap; }
+  .field-name .req { color: var(--danger); margin-left: 3px; }
+  .field-desc { color: var(--ink-soft); }
+
+  .steps {
+    margin: 0 0 16px;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 2px 0 2px 30px;
+    margin-bottom: 8px;
+    font-size: 14.5px;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--honey-tint);
+    color: var(--honey);
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 11px;
+    display: grid;
+    place-items: center;
+  }
+
+  .callout {
+    display: flex;
+    gap: 10px;
+    padding: 12px 15px;
+    border-radius: 7px;
+    border-left: 3px solid var(--honey);
+    background: var(--honey-tint);
+    font-size: 13.6px;
+    margin: 14px 0;
+  }
+  .callout.success { border-left-color: var(--clover); background: var(--clover-tint); }
+  .callout.warn { border-left-color: var(--danger); background: var(--danger-tint); }
+  .callout svg { flex: none; width: 17px; height: 17px; margin-top: 1px; }
+  .callout strong { font-weight: 700; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 16px; }
+  .chip {
+    font-size: 12px;
+    font-family: ui-monospace, monospace;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--code-bg);
+    color: var(--ink-soft);
+  }
+
+  .legend-mini { display: flex; flex-wrap: wrap; gap: 14px; margin: 4px 0 16px; }
+  .legend-mini .item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-soft); }
+  .legend-mini .dot { width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--wax-line); flex: none; }
+
+  .btn-ref {
+    display: inline-block;
+    font-family: ui-monospace, monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 5px;
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  /* Mobile */
+  .mobile-nav-toggle { display: none; }
+  @media (max-width: 880px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--wax-line);
+      padding: 18px 20px;
+    }
+    .sidebar[data-open="false"] .nav-groups { display: none; }
+    .mobile-nav-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--wax-line);
+      color: var(--ink-soft);
+      font-size: 12.5px;
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+    .brand-row { display: flex; align-items: center; }
+    .brand-sub { margin-left: 36px; }
+    main { padding: 32px 20px 80px; }
+    .field-row { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" data-open="true" aria-label="Sommaire">
+    <div class="brand-row" style="display:flex;align-items:center;">
+      <div class="brand">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="none" stroke="var(--honey)" stroke-width="6"/>
+          <polygon points="50,26 72,39 72,61 50,74 28,61 28,39" fill="var(--honey)"/>
+        </svg>
+        <span class="brand-name">HiveTrack</span>
+      </div>
+      <button class="mobile-nav-toggle" onclick="var s=document.getElementById('sidebar'); s.dataset.open = s.dataset.open==='true' ? 'false' : 'true';">
+        Sommaire ▾
+      </button>
+    </div>
+    <p class="brand-sub">Guide d'utilisation</p>
+
+    <div class="nav-groups">
+      <div class="nav-group">
+        <p class="nav-group-label">Démarrer</p>
+        <a href="#demarrage">Créer un compte</a>
+        <a href="#ruchers">Ruchers</a>
+        <a href="#ruches">Ruches &amp; étiquettes QR</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-group-label">Suivi de terrain</p>
+        <a href="#visites">Visites</a>
+        <a href="#traitements">Traitements</a>
+        <a href="#varroa">Suivi varroa</a>
+        <a href="#alimentation">Alimentation</a>
+        <a href="#recoltes">Récoltes</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-group-label">Reines &amp; multiplication</p>
+        <a href="#reines">Élevage des reines</a>
+        <a href="#divisions">Divisions &amp; essaimages</a>
+        <a href="#saisons">Tâches saisonnières</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-group-label">Pilotage</p>
+        <a href="#tableau-de-bord">Tableau de bord</a>
+        <a href="#beebot">Assistant BeeBot</a>
+        <a href="#parametres">Paramètres &amp; export</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main>
+    <div class="page-head">
+      <span class="eyebrow">Guide d'utilisation</span>
+      <h1 class="title">Utiliser HiveTrack au quotidien</h1>
+      <p>Ce guide couvre chaque écran de l'application, dans l'ordre où vous les utiliserez : créer votre rucher, enregistrer vos visites de terrain, suivre la santé de vos colonies et récolter vos données.</p>
+    </div>
+
+    <!-- 1. Démarrage -->
+    <section class="topic" id="demarrage">
+      <h2><span class="topic-num">01</span> Créer un compte</h2>
+      <p class="desc">L'inscription se fait par email. Un lien de confirmation est nécessaire avant la première connexion.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Nom complet</div><div class="field-desc">Affiché dans votre profil et sur les pages Paramètres.</div></div>
+        <div class="field-row"><div class="field-name">Email</div><div class="field-desc">Sert d'identifiant de connexion et reçoit le lien de confirmation.</div></div>
+        <div class="field-row"><div class="field-name">Mot de passe</div><div class="field-desc">6 caractères minimum.</div></div>
+      </div>
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--honey)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>Après l'inscription, vérifiez votre boîte mail : le compte reste inactif tant que le lien de confirmation n'a pas été ouvert.</span>
+      </div>
+      <p style="font-size:13.8px;color:var(--ink-soft)">Une fois confirmé, connectez-vous avec votre email et mot de passe, ou utilisez <span class="btn-ref">Send Magic Link</span> pour recevoir un lien de connexion sans mot de passe.</p>
+    </section>
+
+    <!-- 2. Ruchers -->
+    <section class="topic" id="ruchers">
+      <h2><span class="topic-num">02</span> Ruchers</h2>
+      <p class="desc">Un rucher représente un emplacement géographique regroupant plusieurs ruches. Créez-en un avant d'ajouter votre première ruche.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Name<span class="req">*</span></div><div class="field-desc">Nom du rucher, par ex. « Rucher Nord — Berkane ».</div></div>
+        <div class="field-row"><div class="field-name">Latitude / Longitude<span class="req">*</span></div><div class="field-desc">Position GPS. Le bouton <span class="btn-ref">Use GPS</span> remplit les deux champs depuis la position de votre appareil.</div></div>
+        <div class="field-row"><div class="field-name">Altitude (m)</div><div class="field-desc">Optionnelle, utile pour comparer des ruchers en montagne.</div></div>
+        <div class="field-row"><div class="field-name">Environment Type</div><div class="field-desc">Urbain, Suburbain, Rural, Forêt, Agricole ou Montagne.</div></div>
+        <div class="field-row"><div class="field-name">Water source nearby</div><div class="field-desc">Interrupteur signalant un point d'eau à proximité immédiate.</div></div>
+      </div>
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--honey)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>La position du rucher alimente aussi les prévisions météo affichées sur le tableau de bord et lors des visites.</span>
+      </div>
+    </section>
+
+    <!-- 3. Ruches -->
+    <section class="topic" id="ruches">
+      <h2><span class="topic-num">03</span> Ruches &amp; étiquettes QR</h2>
+      <p class="desc">Chaque ruche appartient à un rucher et reçoit automatiquement une étiquette QR unique, imprimable et scannable sur le terrain.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Apiary<span class="req">*</span></div><div class="field-desc">Présélectionné si un seul rucher existe, ou si vous arrivez depuis la fiche d'un rucher.</div></div>
+        <div class="field-row"><div class="field-name">Name<span class="req">*</span></div><div class="field-desc">Identifiant de la ruche, par ex. « Ruche #1 ».</div></div>
+        <div class="field-row"><div class="field-name">Type</div><div class="field-desc">Langstroth, Dadant, Warré, Top-Bar ou Autre.</div></div>
+        <div class="field-row"><div class="field-name">Color</div><div class="field-desc">8 teintes au choix, pour repérer visuellement la ruche sur le terrain et dans les listes.</div></div>
+      </div>
+      <p style="font-size:14.5px;font-weight:600;margin:20px 0 6px;">Imprimer et scanner les étiquettes</p>
+      <ol class="steps">
+        <li>Ouvrez <code>/hives/print</code> pour imprimer toutes les étiquettes actives, ou <span class="btn-ref">Print Tag</span> depuis une fiche ruche pour une étiquette seule.</li>
+        <li>Fixez l'étiquette imprimée sur la ruche correspondante.</li>
+        <li>Sur le terrain, ouvrez <code>/scan</code> et visez l'étiquette avec la caméra — ou scannez-la avec l'appareil photo natif du téléphone.</li>
+        <li>La fiche de la ruche s'ouvre directement, prête pour enregistrer une visite.</li>
+      </ol>
+    </section>
+
+    <!-- 4. Visites -->
+    <section class="topic" id="visites">
+      <h2><span class="topic-num">04</span> Visites de terrain</h2>
+      <p class="desc">Le formulaire de visite est pensé pour être rempli en quelques secondes, ruche en main.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Date &amp; heure</div><div class="field-desc">Horodatage de l'inspection.</div></div>
+        <div class="field-row"><div class="field-name">Météo</div><div class="field-desc">Récupérée automatiquement (température, conditions, vent) — aucune saisie requise.</div></div>
+        <div class="field-row"><div class="field-name">Comportement</div><div class="field-desc">Calme, Nerveuse ou Agressive.</div></div>
+        <div class="field-row"><div class="field-name">Cadres de couvain / réserves / pollen</div><div class="field-desc">Trois compteurs indépendants avec boutons +/-.</div></div>
+        <div class="field-row"><div class="field-name">Reine vue ?</div><div class="field-desc">Si activé, révèle un second interrupteur « Ponte active ? ».</div></div>
+        <div class="field-row"><div class="field-name">Signes d'essaimage</div><div class="field-desc">Cellules royales, perte de poids, bourdonnement caractéristique — sélection multiple.</div></div>
+        <div class="field-row"><div class="field-name">Photos &amp; notes</div><div class="field-desc">Pièces jointes et remarques libres.</div></div>
+      </div>
+      <div class="callout success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--clover)" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>Chaque visite enregistrée réinitialise le compteur « jours depuis la dernière visite » affiché sur la carte de la ruche.</span>
+      </div>
+    </section>
+
+    <!-- 5. Traitements -->
+    <section class="topic" id="traitements">
+      <h2><span class="topic-num">05</span> Traitements</h2>
+      <p class="desc">Suivez chaque traitement varroa ou sanitaire avec son délai avant récolte, calculé automatiquement.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Hive<span class="req">*</span></div><div class="field-desc">Ruche concernée.</div></div>
+        <div class="field-row"><div class="field-name">Product<span class="req">*</span></div><div class="field-desc">Nom du produit — Apivar, acide oxalique, thymol, etc.</div></div>
+        <div class="field-row"><div class="field-name">Code AMM</div><div class="field-desc">Optionnel, pour la traçabilité réglementaire.</div></div>
+        <div class="field-row"><div class="field-name">Dates début / fin<span class="req">*</span></div><div class="field-desc">La date de fin doit être postérieure ou égale à la date de début.</div></div>
+        <div class="field-row"><div class="field-name">Délai avant récolte (jours)</div><div class="field-desc">Ajouté à la date de fin pour calculer la date de récolte sans danger.</div></div>
+      </div>
+      <div class="callout warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2.5 18a1 1 0 00.9 1.5h17.2a1 1 0 00.9-1.5L13.7 3.9a1 1 0 00-1.4 0z"/></svg>
+        <span>Le résumé du traitement passe en rouge lorsqu'il reste 7 jours ou moins avant la fin — pensez à vérifier avant toute récolte.</span>
+      </div>
+    </section>
+
+    <!-- 6. Varroa -->
+    <section class="topic" id="varroa">
+      <h2><span class="topic-num">06</span> Suivi varroa</h2>
+      <p class="desc">Chaque comptage calcule instantanément le taux d'infestation et son niveau d'alerte.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Method</div><div class="field-desc">Lavage à l'alcool, sucre glace, couvain de mâles découpé, ou plaque collante — chaque méthode propose une taille d'échantillon par défaut.</div></div>
+        <div class="field-row"><div class="field-name">Mites counted<span class="req">*</span></div><div class="field-desc">Nombre d'acariens trouvés dans l'échantillon.</div></div>
+        <div class="field-row"><div class="field-name">Bees/cells sampled</div><div class="field-desc">Taille de l'échantillon utilisé pour le calcul du taux.</div></div>
+      </div>
+      <p style="font-size:13.6px;color:var(--ink-soft);margin-bottom:6px;">Niveaux d'alerte, calculés automatiquement :</p>
+      <div class="chip-row">
+        <span class="chip" style="color:var(--clover)">&lt; 2 % — sous le seuil</span>
+        <span class="chip" style="color:#B8860B">2–3 % — à surveiller</span>
+        <span class="chip" style="color:var(--danger)">≥ 3 % — traitement immédiat</span>
+      </div>
+    </section>
+
+    <!-- 7. Alimentation -->
+    <section class="topic" id="alimentation">
+      <h2><span class="topic-num">07</span> Alimentation</h2>
+      <p class="desc">Un nourrissement peut être enregistré pour une ruche seule ou pour tout un rucher en une fois.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Cible</div><div class="field-desc">« Collectif » applique le nourrissement à tout le rucher ; « Individuel » cible une seule ruche.</div></div>
+        <div class="field-row"><div class="field-name">Type d'aliment<span class="req">*</span></div><div class="field-desc">Sirop léger 1:1, sirop épais 2:1, pâte protéinée ou candi.</div></div>
+        <div class="field-row"><div class="field-name">Quantité &amp; unité<span class="req">*</span></div><div class="field-desc">En litres pour les sirops, en kilogrammes pour candi et pâte protéinée.</div></div>
+      </div>
+    </section>
+
+    <!-- 8. Récoltes -->
+    <section class="topic" id="recoltes">
+      <h2><span class="topic-num">08</span> Récoltes</h2>
+      <p class="desc">Chaque récolte est rattachée à un rucher et alimente les statistiques de rendement.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Apiary<span class="req">*</span></div><div class="field-desc">Rucher récolté.</div></div>
+        <div class="field-row"><div class="field-name">Poids total (kg)<span class="req">*</span></div><div class="field-desc">Quantité de miel extraite.</div></div>
+        <div class="field-row"><div class="field-name">Humidité (%)</div><div class="field-desc">Optionnelle, pour suivre la qualité de conservation.</div></div>
+        <div class="field-row"><div class="field-name">Flore</div><div class="field-desc">Origine florale — acacia, tilleul, fleurs sauvages, etc.</div></div>
+      </div>
+    </section>
+
+    <!-- 9. Reines -->
+    <section class="topic" id="reines">
+      <h2><span class="topic-num">09</span> Élevage des reines</h2>
+      <p class="desc">Enregistrez la date de greffage (J0) : HiveTrack génère automatiquement les 4 étapes clés de suivi.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Hive<span class="req">*</span></div><div class="field-desc">Ruche receveuse.</div></div>
+        <div class="field-row"><div class="field-name">Date de greffage (J0)<span class="req">*</span></div><div class="field-desc">Point de départ du calendrier d'élevage.</div></div>
+        <div class="field-row"><div class="field-name">Type</div><div class="field-desc">Greffage, naturel ou division.</div></div>
+      </div>
+      <ol class="steps">
+        <li>J+5 — Operculation de la cellule royale</li>
+        <li>J+16 — Naissance de la reine</li>
+        <li>J+22 — Vol de fécondation</li>
+        <li>J+27 — Ponte observée</li>
+      </ol>
+      <p style="font-size:13.8px;color:var(--ink-soft);margin-bottom:6px;">Code couleur international de marquage :</p>
+      <div class="legend-mini">
+        <span class="item"><span class="dot" style="background:#3B82F6"></span>0 / 5 — Bleu</span>
+        <span class="item"><span class="dot" style="background:#F8FAFC"></span>1 / 6 — Blanc</span>
+        <span class="item"><span class="dot" style="background:#EAB308"></span>2 / 7 — Jaune</span>
+        <span class="item"><span class="dot" style="background:#EF4444"></span>3 / 8 — Rouge</span>
+        <span class="item"><span class="dot" style="background:#22C55E"></span>4 / 9 — Vert</span>
+      </div>
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--honey)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>La couleur du point affiché sur chaque fiche ruche correspond à l'année de naissance de la reine ; HiveTrack calcule et affiche son âge automatiquement.</span>
+      </div>
+    </section>
+
+    <!-- 10. Divisions -->
+    <section class="topic" id="divisions">
+      <h2><span class="topic-num">10</span> Divisions &amp; essaimages</h2>
+      <p class="desc">Consignez chaque division pour multiplier ou renforcer votre cheptel.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Source hive<span class="req">*</span></div><div class="field-desc">Ruche divisée.</div></div>
+        <div class="field-row"><div class="field-name">New hive</div><div class="field-desc">Optionnelle — à renseigner dès que la nouvelle ruche est créée.</div></div>
+        <div class="field-row"><div class="field-name">Split type</div><div class="field-desc">Walk-away, essaim artificiel, nucleus ou cut-down.</div></div>
+        <div class="field-row"><div class="field-name">Queen status</div><div class="field-desc">Cellule royale présente, reine vierge ou fécondée introduite, ou orpheline.</div></div>
+      </div>
+      <p style="font-size:13.8px;color:var(--ink-soft)">La page Divisions affiche aussi le programme saisonnier ORMVAM Berkane à titre indicatif — un guide de référence, non lié à vos propres données.</p>
+    </section>
+
+    <!-- 11. Saisons -->
+    <section class="topic" id="saisons">
+      <h2><span class="topic-num">11</span> Tâches saisonnières</h2>
+      <p class="desc">Un calendrier de référence, organisé par saison, couvrant inspection, varroa, essaimage, équipement, reine, alimentation, récolte et planification. La saison en cours est automatiquement mise en évidence — ce calendrier est informatif et ne nécessite aucune saisie.</p>
+    </section>
+
+    <!-- 12. Dashboard -->
+    <section class="topic" id="tableau-de-bord">
+      <h2><span class="topic-num">12</span> Tableau de bord</h2>
+      <p class="desc">Vue d'ensemble de votre exploitation à l'ouverture de l'application.</p>
+      <ul class="steps" style="list-style:none;padding:0;">
+        <li style="padding-left:0;">— Ruches actives, ruchers, ruches « à visiter » et traitements bientôt terminés</li>
+        <li style="padding-left:0;">— Prévisions météo par rucher</li>
+        <li style="padding-left:0;">— Graphique des visites par semaine et des récoltes par rucher</li>
+        <li style="padding-left:0;">— Alertes varroa, rappels d'élevage de reines et suggestions de nourrissement</li>
+      </ul>
+    </section>
+
+    <!-- 13. BeeBot -->
+    <section class="topic" id="beebot">
+      <h2><span class="topic-num">13</span> Assistant BeeBot</h2>
+      <p class="desc">Une bulle de discussion flottante, visible sur toutes les pages, répond aux questions apicoles : inspections, varroa et maladies, gestion saisonnière, récolte, nourrissement, divisions, réglementation. BeeBot répond dans la langue utilisée (français, arabe ou anglais) et décline les questions hors apiculture.</p>
+    </section>
+
+    <!-- 14. Paramètres -->
+    <section class="topic" id="parametres">
+      <h2><span class="topic-num">14</span> Paramètres &amp; export</h2>
+      <p class="desc">Retrouvez votre profil, la langue de l'interface et l'export de vos données.</p>
+      <div class="fields">
+        <div class="field-row"><div class="field-name">Profil</div><div class="field-desc">Nom complet et email, en lecture seule.</div></div>
+        <div class="field-row"><div class="field-name">Langue</div><div class="field-desc">Bascule l'interface entre français, anglais et arabe.</div></div>
+        <div class="field-row"><div class="field-name">Export</div><div class="field-desc"><span class="btn-ref">Export CSV</span> ou <span class="btn-ref">Export JSON</span> téléchargent l'ensemble ruchers / ruches / visites / traitements / récoltes en un clic.</div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
