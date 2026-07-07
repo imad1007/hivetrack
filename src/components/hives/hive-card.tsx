@@ -46,8 +46,8 @@ export function HiveCard({ hive, lastVisitAt }: HiveCardProps) {
           {/* Queen info */}
           {activeQueen ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <QueenMark year={activeQueen.mark_year} size="sm" />
-              <span>{activeQueen.breed ?? "Unknown breed"} · {activeQueen.mark_year}</span>
+              <QueenMark year={activeQueen.mark_year} size="sm" showAge />
+              {activeQueen.breed && <span className="truncate">{activeQueen.breed}</span>}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground italic">No queen recorded</p>
