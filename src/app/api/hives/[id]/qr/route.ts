@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { checkQRAccess } from "@/lib/plan-guard";
 import QRCode from "qrcode";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -10,15 +9,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const db = createServiceClient();
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("plan_tier")
-    .eq("user_id", user.id)
-    .single();
-
-  const accessError = checkQRAccess(profile?.plan_tier ?? "free");
-  if (accessError) return accessError;
 
   const { data: hive, error } = await db
     .from("hives")

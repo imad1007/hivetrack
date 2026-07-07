@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { checkHiveLimit } from "@/lib/plan-guard";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -26,21 +25,6 @@ export async function POST(request: NextRequest) {
   if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const db = await createServiceClient();
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("plan_tier")
-    .eq("user_id", user.id)
-    .single();
-
-  const { count } = await db
-    .from("hives")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("status", "active");
-
-  const limitError = checkHiveLimit(profile?.plan_tier ?? "free", count ?? 0);
-  if (limitError) return limitError;
 
   const body = await request.json();
   const { apiary_id, name, type, color_code } = body;

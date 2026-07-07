@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { checkExportAccess } from "@/lib/plan-guard";
-
 function toCSV(rows: Record<string, unknown>[]): string {
   if (!rows.length) return "";
   const headers = Object.keys(rows[0]);
@@ -30,15 +28,6 @@ export async function GET(request: NextRequest) {
   if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const db = await createServiceClient();
-
-  const { data: profile } = await db
-    .from("profiles")
-    .select("plan_tier")
-    .eq("user_id", user.id)
-    .single();
-
-  const accessError = checkExportAccess(profile?.plan_tier ?? "free");
-  if (accessError) return accessError;
 
   const { data: userHives } = await db.from("hives").select("id").eq("user_id", user.id);
   const hiveIds = userHives?.map((h) => h.id) ?? [];
