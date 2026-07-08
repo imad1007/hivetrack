@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/is-admin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, LogOut, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users } from "lucide-react";
+import { AdminSignOutButton } from "@/components/admin/admin-sign-out-button";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -29,14 +30,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </nav>
 
         <div className="shrink-0 border-t p-3 text-xs text-muted-foreground space-y-2">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <ChevronRight className="h-4 w-4 rotate-180" />
-            Back to Dashboard
-          </Link>
           <p className="px-2 truncate">{user.email}</p>
+          <AdminSignOutButton />
         </div>
       </aside>
 
@@ -46,10 +41,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex md:hidden h-14 items-center border-b px-4 gap-3 bg-card">
           <span className="font-bold text-primary">HiveTrack</span>
           <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase">Admin</span>
-          <div className="ml-auto flex gap-2 text-xs">
+          <div className="ml-auto flex items-center gap-2 text-xs">
             <Link href="/admin" className="rounded px-2 py-1 hover:bg-accent">Overview</Link>
             <Link href="/admin/users" className="rounded px-2 py-1 hover:bg-accent">Beekeepers</Link>
-            <Link href="/dashboard" className="rounded px-2 py-1 hover:bg-accent text-muted-foreground">← App</Link>
+            <AdminSignOutButton className="rounded px-2 py-1 hover:bg-accent text-muted-foreground flex items-center gap-1" />
           </div>
         </div>
 
@@ -83,4 +78,3 @@ function AdminNavLink({
   );
 }
 
-export { LogOut };
